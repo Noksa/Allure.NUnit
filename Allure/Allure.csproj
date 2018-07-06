@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net45;net451;net452;net46;net461;net462;net47;net471</TargetFrameworks>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageId>Noksa.NUnit.Allure</PackageId>
+    <Version>1.0.4</Version>
+    <Authors>Noksa (Alexandr Danilin)</Authors>
+    <Product>Noksa (Alexandr Danilin)</Product>
+    <Description>Allure with improvements</Description>
+    <Copyright>Noksa (Alexandr Danilin)</Copyright>
+    <Company>Noksa (Alexandr Danilin)</Company>
+    <PackageTags>allure</PackageTags>
+    <PackageReleaseNotes>Added support net45/net451/net452/netstandard2.0</PackageReleaseNotes>
+    <NeutralLanguage>en</NeutralLanguage>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="10.0.1" />
+    <PackageReference Include="NUnit" Version="3.8.0" />
+  </ItemGroup>
+
+</Project>
