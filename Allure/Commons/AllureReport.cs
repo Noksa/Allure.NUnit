@@ -75,10 +75,15 @@ namespace Allure.Commons
             var defects = attrs.Where(_ => _ is AllureIssueAttribute).Cast<AllureIssueAttribute>().Count();
             AddAttrInfoToTestCaseFromAttributes(attrs);
             if (defects != 0)
-                AllureLifecycle.Instance.UpdateTestCase(_ => { _.labels.Add(Label.SubSuite("With defects")); });
+                AllureLifecycle.Instance.UpdateTestCase(_ =>
+                {
+                    var subSuites = _.labels.Where(lbl => lbl.name.ToLower().Equals("subsuite")).ToList();
+                    subSuites.ForEach(lbl => _.labels.Remove(lbl));
+                    _.labels.Add(Label.SubSuite("With defects"));
+                });
         }
 
-        private static void AddAttrInfoToTestCaseFromAttributes(List<Attribute> attrs)
+        private static void AddAttrInfoToTestCaseFromAttributes(IEnumerable<Attribute> attrs)
         {
             foreach (var attribute in attrs)
                 switch (attribute)

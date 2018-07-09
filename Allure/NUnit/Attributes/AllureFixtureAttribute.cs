@@ -94,7 +94,12 @@ namespace Allure.NUnit.Attributes
                 AllureLifecycle.Instance.StartTestCase(testResult);
                 AllureReport.AddInfoInTestCase(pair.Key.Method.MethodInfo);
                 var statusTest = pair.Key.RunState == RunState.Ignored ? Status.broken : Status.skipped;
-                AllureLifecycle.Instance.UpdateTestCase(x => x.labels.Add(Label.SubSuite("Ignored tests/test-cases")));
+                AllureLifecycle.Instance.UpdateTestCase(x =>
+                {
+                    var subSuites = x.labels.Where(lbl => lbl.name.ToLower().Equals("subsuite")).ToList();
+                    subSuites.ForEach(lbl => x.labels.Remove(lbl));
+                    x.labels.Add(Label.SubSuite("Ignored tests/test-cases"));
+                });
                 AllureLifecycle.Instance.StopTestCase(_ =>
                 {
                     _.status = statusTest;
