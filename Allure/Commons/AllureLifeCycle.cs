@@ -18,7 +18,7 @@ namespace Allure.Commons
         private static readonly object Lockobj = new object();
         private static AllureLifecycle _instance;
         private readonly AllureStorage _storage;
-        private readonly IAllureResultsWriter _writer;
+        private IAllureResultsWriter _writer;
 
         private AllureLifecycle(string outDir)
         {
@@ -38,16 +38,17 @@ namespace Allure.Commons
                 if (_instance != null) return _instance;
                 lock (Lockobj)
                 {
-                    _instance = _instance ?? CreateInstance();
+                    _instance = _instance ?? new AllureLifecycle("allure-results");
                 }
 
                 return _instance;
             }
         }
 
-        public static AllureLifecycle CreateInstance(string outDir = "allure-results")
+        public AllureLifecycle ChangeResultsDirectory(string dirPath)
         {
-            return new AllureLifecycle(outDir);
+            _writer = GetDefaultResultsWriter(dirPath);
+            return this;
         }
 
         public static long ToUnixTimestamp(DateTimeOffset value = default(DateTimeOffset))
@@ -60,7 +61,7 @@ namespace Allure.Commons
 #endif
         }
 
-#region TestContainer
+        #region TestContainer
 
         public AllureLifecycle StartTestContainer(TestResultContainer container)
         {
@@ -94,9 +95,9 @@ namespace Allure.Commons
             return this;
         }
 
-#endregion
+        #endregion
 
-#region Fixture
+        #region Fixture
 
         public AllureLifecycle StartBeforeFixture(string parentUuid, string uuid, FixtureResult result)
         {
@@ -139,9 +140,9 @@ namespace Allure.Commons
             return this;
         }
 
-#endregion
+        #endregion
 
-#region TestCase
+        #region TestCase
 
         public AllureLifecycle StartTestCase(string containerUuid, TestResult testResult)
         {
@@ -191,9 +192,9 @@ namespace Allure.Commons
             return this;
         }
 
-#endregion
+        #endregion
 
-#region Step
+        #region Step
 
         public AllureLifecycle StartStep(string uuid, StepResult result)
         {
@@ -286,9 +287,9 @@ namespace Allure.Commons
             return this;
         }
 
-#endregion
+        #endregion
 
-#region Attachment
+        #region Attachment
 
         public enum AttachFormat
         {
@@ -346,9 +347,9 @@ namespace Allure.Commons
             return AddAttachment(name, type, path);
         }
 
-#endregion
+        #endregion
 
-#region Extensions
+        #region Extensions
 
         public void CleanupResultDirectory()
         {
@@ -365,10 +366,10 @@ namespace Allure.Commons
             return this;
         }
 
-#endregion
+        #endregion
 
 
-#region Privates
+        #region Privates
 
         private static IEnumerable<Exception> GetInnerExceptions(Exception ex)
         {
@@ -397,6 +398,6 @@ namespace Allure.Commons
             return new FileSystemResultsWriter(outDir);
         }
 
-#endregion
+        #endregion
     }
 }
