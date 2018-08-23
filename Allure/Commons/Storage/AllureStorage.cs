@@ -39,6 +39,13 @@ namespace Allure.Commons.Storage
 
                 var sc = _currentThreadStepContext.Values.FirstOrDefault(
                     _ => _.Any(d => d == TestContext.CurrentContext.Test.ID));
+                if (sc == null)
+                {
+                    _currentThreadStepContext.Value = new LinkedList<string>();
+                    _currentThreadStepContext.Value.AddFirst("Fake");
+                    sc = _currentThreadStepContext.Value;
+                    _storage.GetOrAdd("Fake", new StepResult());
+                }
                 var rootStep = sc.Last.Value;
                 if (_currentThreadStepContext.Value == null || _currentThreadStepContext.Value.Count == 0)
                 {
