@@ -82,10 +82,21 @@ namespace Allure.Commons.Storage
 
         public void ClearStepContext()
         {
-            CurrentThreadStepContext.Clear();
-            var scs = _currentThreadStepContext.Values.Where(_ =>
+            CurrentThreadStepContext?.Clear();
+            var scs = _currentThreadStepContext?.Values.Where(_ =>
                 _.Count != 0 && _.Last.Value == TestContext.CurrentContext.Test.ID);
-            foreach (var list in scs) list.Clear();
+            if (scs == null) return;
+            foreach (var list in scs)
+            {
+                try
+                {
+                    list.Clear();
+                }
+                catch (Exception)
+                {
+                    //nothing
+                }
+            }
         }
 
         public void StartStep(string uuid)
