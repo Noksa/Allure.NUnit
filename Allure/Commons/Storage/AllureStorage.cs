@@ -105,7 +105,11 @@ namespace Allure.Commons.Storage
 
         public string GetCurrentStep()
         {
-            return CurrentThreadStepContext.First?.Value;
+            var stepId = CurrentThreadStepContext.First?.Value;
+            if (!string.IsNullOrEmpty(stepId)) return stepId;
+            CurrentThreadStepContext.AddFirst("Fake");
+            _storage.GetOrAdd("Fake", new StepResult());
+            return CurrentThreadStepContext.First.Value;
         }
 
         public void AddStep(string parentUuid, string uuid, StepResult stepResult)
