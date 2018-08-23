@@ -37,7 +37,7 @@ namespace Allure.Commons.Storage
                     return _currentThreadStepContext.Value;
                 }
 
-                var sc = _currentThreadStepContext.Values.First(
+                var sc = _currentThreadStepContext.Values.FirstOrDefault(
                     _ => _.Any(d => d == TestContext.CurrentContext.Test.ID));
                 var rootStep = sc.Last.Value;
                 if (_currentThreadStepContext.Value == null || _currentThreadStepContext.Value.Count == 0)
