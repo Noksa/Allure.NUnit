@@ -86,11 +86,13 @@ namespace Allure.Commons.Storage
             var scs = _currentThreadStepContext?.Values.Where(_ =>
                 _.Count != 0 && _.Last.Value == TestContext.CurrentContext.Test.ID);
             if (scs == null) return;
-            foreach (var list in scs)
+            var list = scs.ToList();
+            if (!list.Any()) return;
+            foreach (var nestedList in list)
             {
                 try
                 {
-                    list.Clear();
+                    nestedList.Clear();
                 }
                 catch (Exception)
                 {
