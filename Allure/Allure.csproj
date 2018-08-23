@@ -4,14 +4,14 @@
     <TargetFrameworks>netstandard2.0;net45;net451;net452;net46;net461;net462;net47;net471</TargetFrameworks>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>Noksa.NUnit.Allure</PackageId>
-    <Version>1.0.4</Version>
+    <Version>1.0.6</Version>
     <Authors>Noksa (Alexandr Danilin)</Authors>
     <Product>Noksa (Alexandr Danilin)</Product>
     <Description>Allure with improvements</Description>
     <Copyright>Noksa (Alexandr Danilin)</Copyright>
     <Company>Noksa (Alexandr Danilin)</Company>
     <PackageTags>allure</PackageTags>
-    <PackageReleaseNotes>Added support net45/net451/net452/netstandard2.0</PackageReleaseNotes>
+    <PackageReleaseNotes>Fixed when [OneTimeSetup] methods throws exs</PackageReleaseNotes>
     <NeutralLanguage>en</NeutralLanguage>
   </PropertyGroup>
 
