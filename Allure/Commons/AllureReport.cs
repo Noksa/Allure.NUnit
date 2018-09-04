@@ -16,42 +16,50 @@ namespace Allure.Commons
     [AllureFixture]
     public abstract class AllureReport
     {
+        [ThreadStatic] private static string _testUuid;
+
+        [ThreadStatic] internal static IList<ITest> AllTestsCurrentSuite;
+
         [SetUp]
         protected void StartAllureLogging()
         {
-            AllureStorage.MainThreadId = Thread.CurrentThread.ManagedThreadId;
-            var testResult = new TestResult
-            {
-                uuid = TestContext.CurrentContext.Test.ID,
-                name = TestContext.CurrentContext.Test.Name,
-                fullName = TestContext.CurrentContext.Test.FullName,
-                labels = new List<Label>
-                {
-                    Label.Thread(),
-                    Label.Host(),
-                    Label.TestClass(TestContext.CurrentContext.Test.ClassName),
-                    Label.TestMethod(TestContext.CurrentContext.Test.MethodName),
-                    Label.Package(TestContext.CurrentContext.Test.ClassName)
-                }
-            };
-            AllureLifecycle.Instance.StartTestCase(testResult);
+            StartAllureLogging(TestContext.CurrentContext.Test.Name, TestContext.CurrentContext.Test.FullName, TestContext.CurrentContext.Test.ClassName, TestContext.CurrentContext.Test.MethodName);
         }
+
+        
 
         [TearDown]
         protected void StopAllureLogging()
         {
-            AddInfoInTestCase(TestExecutionContext.CurrentContext.CurrentTest.Method.MethodInfo);
-            AllureLifecycle.Instance.UpdateTestCase(x =>
+            StopAllureLogging(TestExecutionContext.CurrentContext.CurrentTest.Method.MethodInfo, TestContext.CurrentContext.Result.Message, TestContext.CurrentContext.Result.StackTrace, TestContext.CurrentContext.Result.Outcome.Status);
+        }
+
+        [OneTimeTearDown]
+        public void OneTimeTearDown()
+        {
+            if (TestContext.CurrentContext.Result.Outcome.Site == FailureSite.SetUp && Config.AllowEmptySuites)
             {
-                x.statusDetails = new StatusDetails
+                var fixture = new TestResultContainer
                 {
-                    message = MakeGoodErrorMsg(TestContext.CurrentContext.Result.Message),
-                    trace = TestContext.CurrentContext.Result.StackTrace
+                    uuid = TestContext.CurrentContext.Test.ID,
+                    name = TestContext.CurrentContext.Test.ClassName
                 };
-            });
-            AllureLifecycle.Instance.StopTestCase(x =>
-                x.status = GetNunitStatus(TestContext.CurrentContext.Result.Outcome.Status));
-            AllureLifecycle.Instance.WriteTestCase(TestContext.CurrentContext.Test.ID);
+                AllureLifecycle.Instance.StartTestContainer(fixture);
+                foreach (var test in AllTestsCurrentSuite)
+                {
+                    StartAllureLogging(test.Name, test.FullName, test.ClassName, test.MethodName);
+                    var uuid = $"{Guid.NewGuid():N}";
+                    AllureLifecycle.Instance.StartStep("The test was not started", uuid);
+                    AllureLifecycle.Instance.UpdateStep(q =>
+                    {
+                        q.status = Status.failed;
+                        q.stop = AllureLifecycle.ToUnixTimestamp();
+                    });
+                    StopAllureLogging(test.Method.MethodInfo, TestContext.CurrentContext.Result.Message, TestContext.CurrentContext.Result.StackTrace, TestContext.CurrentContext.Result.Outcome.Status);
+                }
+
+                AllureLifecycle.Instance.WriteTestContainer(TestContext.CurrentContext.Test.ID);
+            }
         }
 
         internal static void AddInfoInTestCase(MethodInfo testMethod)
@@ -81,6 +89,55 @@ namespace Allure.Commons
                     subSuites.ForEach(lbl => _.labels.Remove(lbl));
                     _.labels.Add(Label.SubSuite("With defects"));
                 });
+        }
+
+       
+        
+
+        protected string MakeGoodErrorMsg(string errorMsg)
+        {
+            if (string.IsNullOrEmpty(errorMsg)) return errorMsg;
+            var index = errorMsg.IndexOf("Multiple", StringComparison.Ordinal);
+            if (index == -1 || index == 0) return errorMsg;
+            var goodMsg = errorMsg.Substring(0, index) + " \r\n" + errorMsg.Substring(index);
+            return goodMsg;
+        }
+
+        #region Privates
+
+        private void StopAllureLogging(MethodInfo methodInfo, string resultMsg, string stackTrace, TestStatus status)
+        {
+            AddInfoInTestCase(methodInfo);
+            AllureLifecycle.Instance.UpdateTestCase(x =>
+            {
+                x.statusDetails = new StatusDetails
+                {
+                    message = MakeGoodErrorMsg(resultMsg),
+                    trace = stackTrace
+                };
+            });
+            AllureLifecycle.Instance.StopTestCase(x =>
+                x.status = GetNunitStatus(status));
+            AllureLifecycle.Instance.WriteTestCase(_testUuid);
+        }
+
+        private static Status GetNunitStatus(TestStatus status)
+        {
+            switch (status)
+            {
+                case TestStatus.Inconclusive:
+                    return Status.broken;
+                case TestStatus.Skipped:
+                    return Status.skipped;
+                case TestStatus.Passed:
+                    return Status.passed;
+                case TestStatus.Warning:
+                    return Status.broken;
+                case TestStatus.Failed:
+                    return Status.failed;
+                default:
+                    return Status.none;
+            }
         }
 
         private static void AddAttrInfoToTestCaseFromAttributes(IEnumerable<Attribute> attrs)
@@ -134,32 +191,35 @@ namespace Allure.Commons
                 }
         }
 
-        private static Status GetNunitStatus(TestStatus status)
+        private void StartAllureLogging(string testName, string testFullName, string testClassName, string methodName)
         {
-            switch (status)
+            AllureStorage.MainThreadId = Thread.CurrentThread.ManagedThreadId;
+            _testUuid = $"{TestContext.CurrentContext.Test.ID}_{Guid.NewGuid():N}";
+            var testResult = new TestResult
             {
-                case TestStatus.Inconclusive:
-                    return Status.broken;
-                case TestStatus.Skipped:
-                    return Status.skipped;
-                case TestStatus.Passed:
-                    return Status.passed;
-                case TestStatus.Warning:
-                    return Status.broken;
-                case TestStatus.Failed:
-                    return Status.failed;
-                default:
-                    return Status.none;
-            }
+
+                uuid = _testUuid,
+                name = testName,
+                fullName = testFullName,
+                labels = new List<Label>
+                {
+                    Label.Thread(),
+                    Label.Host(),
+                    Label.TestClass(testClassName),
+                    Label.TestMethod(methodName),
+                    Label.Package(testClassName),
+                },
+                historyId = testName
+            };
+            AllureLifecycle.Instance.StartTestCase(testResult);
         }
 
-        protected string MakeGoodErrorMsg(string errorMsg)
+        #endregion
+
+        internal class Config
         {
-            if (string.IsNullOrEmpty(errorMsg)) return errorMsg;
-            var index = errorMsg.IndexOf("Multiple", StringComparison.Ordinal);
-            if (index == -1 || index == 0) return errorMsg;
-            var goodMsg = errorMsg.Substring(0, index) + " \r\n" + errorMsg.Substring(index);
-            return goodMsg;
+            internal static bool AllowEmptySuites { get; set; }
         }
+
     }
 }

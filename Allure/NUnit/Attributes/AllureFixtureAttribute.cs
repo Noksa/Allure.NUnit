@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using Allure.Commons;
+using Allure.Commons.Helpers;
 using Allure.Commons.Model;
 using Allure.Commons.Storage;
 using NUnit.Framework;
@@ -13,7 +14,7 @@ using TestResult = Allure.Commons.Model.TestResult;
 namespace Allure.NUnit.Attributes
 {
     [AttributeUsage(AttributeTargets.Class)]
-    public class AllureFixtureAttribute : NUnitAttribute, ITestAction
+    public class AllureFixtureAttribute : NUnitAttribute, ITestAction, IApplyToContext
     {
         private readonly Dictionary<ITest, string> _ignoredTests = new Dictionary<ITest, string>();
 
@@ -61,7 +62,7 @@ namespace Allure.NUnit.Attributes
                             _ignoredTests.Add(localTest, localTest.Properties.Get(PropertyNames.SkipReason).ToString());
             }
 
-            FailTestIfIgnored(_ignoredTests);
+            FailIgnoredTests(_ignoredTests);
 
             if (test.HasChildren)
                 AllureLifecycle.Instance.UpdateTestContainer(test.Id,
@@ -72,7 +73,17 @@ namespace Allure.NUnit.Attributes
             AllureLifecycle.Instance.WriteTestContainer(test.Id);
         }
 
-        private static void FailTestIfIgnored(Dictionary<ITest, string> dict)
+        public void ApplyToContext(TestExecutionContext context)
+        {
+            var suite = context.CurrentTest;
+            if (!suite.IsSuite) return;
+            if (!suite.HasChildren) throw new Exception("It's a single test!");
+            AllureReport.AllTestsCurrentSuite = Helper.GetAllTestsInSuite(suite);
+        }
+
+        #region Privates
+
+        private static void FailIgnoredTests(Dictionary<ITest, string> dict)
         {
             foreach (var pair in dict)
             {
@@ -111,5 +122,7 @@ namespace Allure.NUnit.Attributes
                 AllureLifecycle.Instance.WriteTestCase(testResult.uuid);
             }
         }
+
+        #endregion
     }
 }

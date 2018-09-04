@@ -51,6 +51,12 @@ namespace Allure.Commons
             return this;
         }
 
+        public bool AllowEmptySuites 
+        {
+            get => AllureReport.Config.AllowEmptySuites;
+            set => AllureReport.Config.AllowEmptySuites = value;
+        }
+
         public static long ToUnixTimestamp(DateTimeOffset value = default(DateTimeOffset))
         {
             if (value == default(DateTimeOffset)) value = DateTimeOffset.Now;
