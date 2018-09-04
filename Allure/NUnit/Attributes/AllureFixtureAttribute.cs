@@ -77,7 +77,6 @@ namespace Allure.NUnit.Attributes
         {
             var suite = context.CurrentTest;
             if (!suite.IsSuite) return;
-            if (!suite.HasChildren) throw new Exception("It's a single test!");
             AllureReport.AllTestsCurrentSuite = Helper.GetAllTestsInSuite(suite);
         }
 
