@@ -11,8 +11,11 @@
     <Copyright>Noksa (Alexandr Danilin)</Copyright>
     <Company>Noksa (Alexandr Danilin)</Company>
     <PackageTags>allure</PackageTags>
-    <PackageReleaseNotes>Added new property AllureLifecycle.Instance.AllowEmptySuites &amp; fixed bug with [Retry]</PackageReleaseNotes>
+    <PackageReleaseNotes>Added json config</PackageReleaseNotes>
     <NeutralLanguage>en</NeutralLanguage>
+    <RepositoryUrl>https://github.com/Noksa/Allure.NUnit</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/Noksa/Allure.NUnit</PackageProjectUrl>
+    <PackageIconUrl>https://avatars0.githubusercontent.com/u/36312857?s=40&amp;v=4</PackageIconUrl>
   </PropertyGroup>
 
   <ItemGroup>
