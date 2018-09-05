@@ -37,7 +37,7 @@ namespace Allure.Commons
         [OneTimeTearDown]
         public void OneTimeTearDown()
         {
-            if (TestContext.CurrentContext.Result.Outcome.Site == FailureSite.SetUp && Config.AllowEmptySuites)
+            if (TestContext.CurrentContext.Result.Outcome.Site == FailureSite.SetUp && AllureLifecycle.Instance.Config.Allure.AllowEmptySuites)
             {
                 var fixture = new TestResultContainer
                 {
@@ -215,11 +215,5 @@ namespace Allure.Commons
         }
 
         #endregion
-
-        internal class Config
-        {
-            internal static bool AllowEmptySuites { get; set; }
-        }
-
     }
 }

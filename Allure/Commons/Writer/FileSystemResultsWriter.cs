@@ -6,15 +6,12 @@ using Allure.Commons.Model;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
-[assembly: InternalsVisibleTo("Allure.Commons.Tests")]
 [assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
 
 namespace Allure.Commons.Writer
 {
     internal sealed class FileSystemResultsWriter : IAllureResultsWriter
     {
-        //private Logger logger = LogManager.GetCurrentClassLogger();
-
         private readonly string _outputDirectory;
         private readonly JsonSerializer _serializer = new JsonSerializer();
 

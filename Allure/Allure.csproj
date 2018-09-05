@@ -4,21 +4,31 @@
     <TargetFrameworks>netstandard2.0;net45;net451;net452;net46;net461;net462;net47;net471</TargetFrameworks>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>Noksa.NUnit.Allure</PackageId>
-    <Version>1.0.7</Version>
+    <Version>2.0.0</Version>
     <Authors>Noksa (Alexandr Danilin)</Authors>
     <Product>Noksa (Alexandr Danilin)</Product>
     <Description>Allure with improvements</Description>
     <Copyright>Noksa (Alexandr Danilin)</Copyright>
     <Company>Noksa (Alexandr Danilin)</Company>
     <PackageTags>allure</PackageTags>
-    <PackageReleaseNotes>Now, if you have an error in the test method with attribute [OneTimeSetUp] in the test fixture, then all the tests from it will fall into the report with an error.
-Fixed bug with Retries</PackageReleaseNotes>
+    <PackageReleaseNotes>Added new property AllureLifecycle.Instance.AllowEmptySuites &amp; fixed bug with [Retry]</PackageReleaseNotes>
     <NeutralLanguage>en</NeutralLanguage>
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="allureConfig.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="allureConfig.json" Pack="true">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  
+  <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="10.0.1" />
     <PackageReference Include="NUnit" Version="3.8.0" />
   </ItemGroup>
+  
 
 </Project>
