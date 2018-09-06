@@ -36,18 +36,38 @@ namespace Allure.Commons.Helpers
             return list;
         }
 
-        internal static void AddToTestCaseParametersInfo()
+        internal static void AddToTestCaseParametersInfo(bool fromOneTimeSetUp = false)
         {
-            var test = AllTestsCurrentSuite.First(w => w.Id == TestContext.CurrentContext.Test.ID);
-            for (var i = 0; i < test.Arguments.Length; i ++)
+            var list = new List<object>();
+            if (!fromOneTimeSetUp)
             {
-                var strArg = test.Arguments[i].ToString();
-                var param = new Parameter
+                list = TestContext.CurrentContext.Test.Arguments.ToList();
+                AddParam(list);
+            }
+            else
+            {
+                if (AllTestsCurrentSuite.Count != 0)
                 {
-                    name = $"Parameter #{i + 1}, {test.Arguments[i].GetType().Name}",
-                    value = strArg
-                };
-                AllureLifecycle.Instance.UpdateTestCase(AllureReport.TestUuid, x => x.parameters.Add(param));
+                    foreach (var notStartedTest in AllTestsCurrentSuite)
+                    {
+                        list = notStartedTest.Arguments.ToList();
+                        AddParam(list);
+                    }
+                }
+            }
+
+            void AddParam(IReadOnlyList<object> listOfArgs)
+            {
+                for (var i = 0; i < listOfArgs.Count; i++)
+                {
+                    var strArg = listOfArgs[i].ToString();
+                    var param = new Parameter
+                    {
+                        name = $"Parameter #{i + 1}, {listOfArgs[i].GetType().Name}",
+                        value = strArg
+                    };
+                    AllureLifecycle.Instance.UpdateTestCase(AllureReport.TestUuid, x => x.parameters.Add(param));
+                }
             }
         }
 
@@ -78,8 +98,15 @@ namespace Allure.Commons.Helpers
                     subSuites.ForEach(lbl => _.labels.Remove(lbl));
                     _.labels.Add(Label.SubSuite("With defects"));
                 });
-
-            AddToTestCaseParametersInfo();
+            if (TestContext.CurrentContext.Result.Outcome.Site == FailureSite.SetUp &&
+                AllureLifecycle.Instance.Config.Allure.AllowEmptySuites)
+            {
+                AddToTestCaseParametersInfo(true);
+            }
+            else
+            {
+                AddToTestCaseParametersInfo();
+            }
         }
 
         internal static void AddToTestCaseFromAttributes(IEnumerable<Attribute> attrs)
