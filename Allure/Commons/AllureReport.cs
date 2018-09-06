@@ -16,7 +16,7 @@ namespace Allure.Commons
         [SetUp]
         protected void StartAllureLogging()
         {
-            ReportHelper.StartAllureLogging(TestContext.CurrentContext.Test.Name,
+            ReportHelper.StartAllureLogging(TestContext.CurrentContext.Test.Name, TestContext.CurrentContext.Test.ID,
                 TestContext.CurrentContext.Test.FullName, TestContext.CurrentContext.Test.ClassName,
                 TestContext.CurrentContext.Test.MethodName);
         }
@@ -32,8 +32,7 @@ namespace Allure.Commons
         [OneTimeTearDown]
         public void OneTimeTearDown()
         {
-            if (TestContext.CurrentContext.Result.Outcome.Site == FailureSite.SetUp &&
-                AllureLifecycle.Instance.Config.Allure.AllowEmptySuites)
+            if (string.IsNullOrEmpty(TestContext.CurrentContext.Test.MethodName) && TestContext.CurrentContext.Result.Outcome.Site == FailureSite.SetUp && AllureLifecycle.Instance.Config.Allure.AllowEmptySuites && TestContext.CurrentContext.Result.Outcome.Status == TestStatus.Failed)
             {
                 var fixture = new TestResultContainer
                 {
@@ -41,9 +40,9 @@ namespace Allure.Commons
                     name = TestContext.CurrentContext.Test.ClassName
                 };
                 AllureLifecycle.Instance.StartTestContainer(fixture);
-                foreach (var test in ReportHelper.AllTestsCurrentSuite)
+                foreach (var test in AllureLifecycle.Instance._currentSuiteTests)
                 {
-                    ReportHelper.StartAllureLogging(test.Name, test.FullName, test.ClassName, test.MethodName);
+                    ReportHelper.StartAllureLogging(test.Name, test.Id, test.FullName, test.ClassName, test.MethodName);
                     var uuid = $"{Guid.NewGuid():N}";
                     AllureLifecycle.Instance.StartStep("The test was not started", uuid);
                     AllureLifecycle.Instance.UpdateStep(q =>

@@ -8,16 +8,16 @@ using Allure.Commons.Storage;
 using Allure.NUnit.Attributes;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
+using TestResult = Allure.Commons.Model.TestResult;
 
 namespace Allure.Commons.Helpers
 {
     internal static class ReportHelper
     {
-        [ThreadStatic] internal static IList<ITest> AllTestsCurrentSuite;
-
         internal static List<ITest> GetAllTestsInSuite(ITest suite)
         {
             var list = new List<ITest>();
+            if (suite.Tests.Count == 0) return list;
             foreach (var nestedTests1 in suite.Tests)
                 if (nestedTests1.HasChildren)
                     foreach (var nestedTests2 in nestedTests1.Tests)
@@ -36,36 +36,39 @@ namespace Allure.Commons.Helpers
             return list;
         }
 
-        internal static void AddToTestCaseParametersInfo(bool fromOneTimeSetUp = false)
+        internal static void AddToTestCaseParametersInfo(int[] hideParams, int[] removeParams)
         {
             var list = new List<object>();
-            if (!fromOneTimeSetUp)
+            if (TestContext.CurrentContext.Result.Outcome.Site == FailureSite.SetUp &&
+                AllureLifecycle.Instance.Config.Allure.AllowEmptySuites && string.IsNullOrEmpty(TestContext.CurrentContext.Test.MethodName) && TestContext.CurrentContext.Result.Outcome.Status == TestStatus.Failed)
             {
-                list = TestContext.CurrentContext.Test.Arguments.ToList();
-                AddParam(list);
-            }
-            else
-            {
-                if (AllTestsCurrentSuite.Count != 0)
+                if (AllureLifecycle.Instance._currentSuiteTests.Count != 0)
                 {
-                    foreach (var notStartedTest in AllTestsCurrentSuite)
+                    foreach (var notStartedTest in AllureLifecycle.Instance._currentSuiteTests)
                     {
                         list = notStartedTest.Arguments.ToList();
                         AddParam(list);
                     }
                 }
             }
+            else
+            {
+                list = TestContext.CurrentContext.Test.Arguments.ToList();
+                if (list.Count != 0) AddParam(list);
+            }
 
             void AddParam(IReadOnlyList<object> listOfArgs)
             {
                 for (var i = 0; i < listOfArgs.Count; i++)
                 {
+                    var paramNum = i + 1;
                     var strArg = listOfArgs[i].ToString();
                     var param = new Parameter
                     {
-                        name = $"Parameter #{i + 1}, {listOfArgs[i].GetType().Name}",
-                        value = strArg
+                        name = $"Parameter #{paramNum}, {listOfArgs[i].GetType().Name}",
+                        value = hideParams.Contains(paramNum) ? "Parameter is hidden" : strArg
                     };
+                    if (removeParams.Contains(paramNum)) continue;
                     AllureLifecycle.Instance.UpdateTestCase(AllureReport.TestUuid, x => x.parameters.Add(param));
                 }
             }
@@ -84,13 +87,13 @@ namespace Allure.Commons.Helpers
                             : Label.Suite(testMethod.Name));
                     });
 
-                AddToTestCaseFromAttributes(testClassAttrs);
+                AddInfoToTestCaseFromAttributes(testClassAttrs, false);
             }
 
             var attrs = testMethod.GetCustomAttributes().ToList();
 
             var defects = attrs.Where(_ => _ is AllureIssueAttribute).Cast<AllureIssueAttribute>().Count();
-            AddToTestCaseFromAttributes(attrs);
+            AddInfoToTestCaseFromAttributes(attrs, true);
             if (defects != 0)
                 AllureLifecycle.Instance.UpdateTestCase(_ =>
                 {
@@ -98,19 +101,12 @@ namespace Allure.Commons.Helpers
                     subSuites.ForEach(lbl => _.labels.Remove(lbl));
                     _.labels.Add(Label.SubSuite("With defects"));
                 });
-            if (TestContext.CurrentContext.Result.Outcome.Site == FailureSite.SetUp &&
-                AllureLifecycle.Instance.Config.Allure.AllowEmptySuites)
-            {
-                AddToTestCaseParametersInfo(true);
-            }
-            else
-            {
-                AddToTestCaseParametersInfo();
-            }
         }
 
-        internal static void AddToTestCaseFromAttributes(IEnumerable<Attribute> attrs)
+        internal static void AddInfoToTestCaseFromAttributes(IEnumerable<Attribute> attrs, bool testMethodAttrs)
         {
+            var removeParamsNumber = new[] {-999};
+            var hideParamsNumber = new[] {-999};
             foreach (var attribute in attrs)
                 switch (attribute)
                 {
@@ -157,7 +153,15 @@ namespace Allure.Commons.Helpers
                         AllureLifecycle.Instance.UpdateTestCase(x =>
                             x.labels.Add(Label.ParentSuite(parentSuiteAttr.ParentSuite)));
                         break;
+                    case AllureRemoveParamsAttribute removeParamsAttr:
+                        removeParamsNumber = removeParamsAttr.ParamNumbers;
+                        break;
+                    case AllureHideParamsAttribute hideParamsAttr:
+                        hideParamsNumber = hideParamsAttr.ParamNumbers;
+                        break;
                 }
+
+            if (testMethodAttrs) AddToTestCaseParametersInfo(hideParamsNumber, removeParamsNumber);
         }
 
         internal static void StopAllureLogging(MethodInfo methodInfo, string resultMsg, string stackTrace,
@@ -196,11 +200,12 @@ namespace Allure.Commons.Helpers
             }
         }
 
-        internal static void StartAllureLogging(string testName, string testFullName, string testClassName,
+        internal static void StartAllureLogging(string testName, string testId, string testFullName,
+            string testClassName,
             string methodName)
         {
             AllureStorage.MainThreadId = Thread.CurrentThread.ManagedThreadId;
-            AllureReport.TestUuid = $"{TestContext.CurrentContext.Test.ID}_{Guid.NewGuid():N}";
+            AllureReport.TestUuid = $"{testId}_{Guid.NewGuid():N}";
             var testResult = new TestResult
             {
                 uuid = AllureReport.TestUuid,
@@ -214,7 +219,7 @@ namespace Allure.Commons.Helpers
                     Label.TestMethod(methodName),
                     Label.Package(testClassName)
                 },
-                historyId = TestContext.CurrentContext.Test.ID
+                historyId = testId
             };
             AllureLifecycle.Instance.StartTestCase(testResult);
         }

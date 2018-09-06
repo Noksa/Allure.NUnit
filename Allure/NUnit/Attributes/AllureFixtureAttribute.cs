@@ -29,7 +29,7 @@ namespace Allure.NUnit.Attributes
         {
             var suite = context.CurrentTest;
             if (!suite.IsSuite) return;
-            ReportHelper.AllTestsCurrentSuite = ReportHelper.GetAllTestsInSuite(suite);
+            AllureLifecycle.Instance._currentSuiteTests = ReportHelper.GetAllTestsInSuite(suite);
         }
 
 

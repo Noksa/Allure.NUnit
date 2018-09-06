@@ -10,6 +10,7 @@ using Allure.Commons.Utils;
 using Allure.Commons.Writer;
 using Newtonsoft.Json;
 using NUnit.Framework;
+using NUnit.Framework.Interfaces;
 
 namespace Allure.Commons
 {
@@ -20,10 +21,11 @@ namespace Allure.Commons
         private readonly AllureStorage _storage;
         internal readonly Configuration Config;
         private IAllureResultsWriter _writer;
-
+        internal IList<ITest> _currentSuiteTests;
         private AllureLifecycle()
         {
-            using (var r = new StreamReader(Path.Combine(WorkspaceDir, AllureConstants.ConfigFilename)))
+            var dir = Path.GetDirectoryName(GetType().Assembly.Location);
+            using (var r = new StreamReader(Path.Combine(dir, AllureConstants.ConfigFilename)))
             {
                 var json = r.ReadToEnd();
                 Config = JsonConvert.DeserializeObject<Configuration>(json);
