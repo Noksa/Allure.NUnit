@@ -37,19 +37,22 @@ namespace Allure.Commons.Helpers
 
         internal static void AddToTestCaseParametersInfo(ITest test, int[] hideParams, int[] removeParams)
         {
-            var listOfArgs = test.Arguments.ToList();
-            for (var i = 0; i < listOfArgs.Count; i++)
+            if (AllureLifecycle.Instance.Config.Allure.EnableParameters)
             {
-                var paramNum = i + 1;
-                var strArg = listOfArgs[i].ToString();
-                var param = new Parameter
+                var listOfArgs = test.Arguments.ToList();
+                for (var i = 0; i < listOfArgs.Count; i++)
                 {
-                    name = $"Parameter #{paramNum}, {listOfArgs[i].GetType().Name}",
-                    value = hideParams.Contains(paramNum) ? "Parameter is hidden" : strArg
-                };
-                if (removeParams.Contains(paramNum)) continue;
-                AllureLifecycle.Instance.UpdateTestCase(test.Properties.Get(AllureConstants.TestUuid).ToString(),
-                    x => x.parameters.Add(param));
+                    var paramNum = i + 1;
+                    var strArg = listOfArgs[i].ToString();
+                    var param = new Parameter
+                    {
+                        name = $"Parameter #{paramNum}, {listOfArgs[i].GetType().Name}",
+                        value = hideParams.Contains(paramNum) ? "Parameter is hidden" : strArg
+                    };
+                    if (removeParams.Contains(paramNum)) continue;
+                    AllureLifecycle.Instance.UpdateTestCase(test.Properties.Get(AllureConstants.TestUuid).ToString(),
+                        x => x.parameters.Add(param));
+                }
             }
         }
 

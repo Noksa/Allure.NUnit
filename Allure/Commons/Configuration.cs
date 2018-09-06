@@ -6,8 +6,9 @@
 
         public class AllureCfg
         {
-            public string Directory { get; set; }
-            public bool AllowEmptySuites { get; set; }
+            public string Directory { get; set; } = "allure-results";
+            public bool AllowEmptySuites { get; set; } = false;
+            public bool EnableParameters { get; set; } = true;
         }
     }
 }

@@ -318,22 +318,35 @@ namespace Allure.Commons
             Video
         }
 
+        public AllureLifecycle AddAttachment(string name, AttachFormat type, byte[] bytesArray,
+            string fileExtension = "")
+        {
+            var asString = Encoding.Default.GetString(bytesArray);
+            return AddAttachment(name, type, asString, fileExtension);
+        }
+
         public AllureLifecycle AddAttachment(string name, AttachFormat type, string content, string fileExtension = "")
         {
             if (type == AttachFormat.ImagePng)
-                return AddAttachment(name, "image/png", Encoding.UTF8.GetBytes(content), fileExtension);
+            {
+                if (string.IsNullOrEmpty(fileExtension)) fileExtension = ".png";
+                return AddAttachment(name, "image/png", File.ReadAllBytes(content), fileExtension);
+            }
 
             switch (type)
             {
                 case AttachFormat.Xml:
                     content = XDocument.Parse(content).ToString();
-                    return AddAttachment(name, "text/xml", Encoding.UTF8.GetBytes(content), fileExtension);
+                    if (string.IsNullOrEmpty(fileExtension)) fileExtension = ".xml";
+                    return AddAttachment(name, "text/xml", File.ReadAllBytes(content), fileExtension);
                 case AttachFormat.Json:
                     var obj = JsonConvert.DeserializeObject(content);
                     content = JsonConvert.SerializeObject(obj, Formatting.Indented);
-                    return AddAttachment(name, "application/json", Encoding.UTF8.GetBytes(content), fileExtension);
+                    if (string.IsNullOrEmpty(fileExtension)) fileExtension = ".json";
+                    return AddAttachment(name, "application/json", File.ReadAllBytes(content), fileExtension);
                 case AttachFormat.Txt:
-                    return AddAttachment(name, "text/txt", Encoding.UTF8.GetBytes(content), fileExtension);
+                    if (string.IsNullOrEmpty(fileExtension)) fileExtension = ".txt";
+                    return AddAttachment(name, "text/txt", File.ReadAllBytes(content), fileExtension);
                 case AttachFormat.Video:
                     return AddAttachment(name, "video/mp4", content);
                 default:
