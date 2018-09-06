@@ -322,19 +322,56 @@ namespace Allure.Commons
             string fileExtension = "")
         {
             var asString = Encoding.Default.GetString(bytesArray);
-            return AddAttachment(name, type, asString, fileExtension);
+            switch (type)
+            {
+                case AttachFormat.Xml:
+                    return AddAttachment(name, type, asString);
+                case AttachFormat.Json:
+                    return AddAttachment(name, type, asString);
+                case AttachFormat.ImagePng:
+                    return AddAttachment(name, "image/png", bytesArray, ".png");
+                case AttachFormat.Txt:
+                    return AddAttachment(name, type, asString);
+                case AttachFormat.Video:
+                    throw new ArgumentException($"You cant use \"{type}\" argument at this method. Try use method with FileInfo parameter.");
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(type), type, null);
+            }
         }
 
-        public AllureLifecycle AddAttachment(string name, AttachFormat type, string content, string fileExtension = "")
+        public AllureLifecycle AddAttachment(string name, AttachFormat type, FileInfo file)
         {
-            if (type == AttachFormat.ImagePng)
+            string inside;
+            using (var u = new StreamReader(file.OpenRead()))
             {
-                if (string.IsNullOrEmpty(fileExtension)) fileExtension = ".png";
-                return AddAttachment(name, "image/png", File.ReadAllBytes(content), fileExtension);
+                inside = u.ReadToEnd();
             }
 
             switch (type)
             {
+                case AttachFormat.Xml:
+                    return AddAttachment(name, AttachFormat.Xml, inside);
+                case AttachFormat.Json:
+                    return AddAttachment(name, AttachFormat.Json, inside);
+                case AttachFormat.ImagePng:
+                    var bytes = Encoding.Default.GetBytes(inside);
+                    return AddAttachment(name, "image/png", bytes, ".png");
+                case AttachFormat.Txt:
+                    return AddAttachment(name, AttachFormat.Txt, inside);
+                case AttachFormat.Video:
+                    return AddAttachment(name, "video/mp4", file.FullName);
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(type), type, null);
+            }
+        }
+
+        public AllureLifecycle AddAttachment(string name, AttachFormat type, string content, string fileExtension = "")
+        {
+            switch (type)
+            {
+                case AttachFormat.ImagePng:
+                case AttachFormat.Video:
+                    throw new ArgumentException($"You cant use \"{type}\" argument at this method. Try use method with FileInfo or with bytes array parameter.");
                 case AttachFormat.Xml:
                     content = XDocument.Parse(content).ToString();
                     if (string.IsNullOrEmpty(fileExtension)) fileExtension = ".xml";
@@ -347,8 +384,6 @@ namespace Allure.Commons
                 case AttachFormat.Txt:
                     if (string.IsNullOrEmpty(fileExtension)) fileExtension = ".txt";
                     return AddAttachment(name, "text/txt", File.ReadAllBytes(content), fileExtension);
-                case AttachFormat.Video:
-                    return AddAttachment(name, "video/mp4", content);
                 default:
                     throw new ArgumentException($"You cant use \"{type}\" argument at this method.");
             }
