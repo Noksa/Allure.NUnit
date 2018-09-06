@@ -18,13 +18,12 @@ namespace Allure.Commons
         private static readonly object Lockobj = new object();
         private static AllureLifecycle _instance;
         private readonly AllureStorage _storage;
-        private IAllureResultsWriter _writer;
         internal readonly Configuration Config;
-        internal string AllureAssemblyDir => Path.GetDirectoryName(GetType().Assembly.Location);
+        private IAllureResultsWriter _writer;
 
         private AllureLifecycle()
         {
-            using (var r = new StreamReader(Path.Combine(AllureAssemblyDir, AllureConstants.ConfigFilename)))
+            using (var r = new StreamReader(Path.Combine(WorkspaceDir, AllureConstants.ConfigFilename)))
             {
                 var json = r.ReadToEnd();
                 Config = JsonConvert.DeserializeObject<Configuration>(json);
@@ -33,6 +32,8 @@ namespace Allure.Commons
             _writer = GetDefaultResultsWriter(Config.Allure.Directory);
             _storage = new AllureStorage();
         }
+
+        internal string WorkspaceDir => TestContext.CurrentContext.WorkDirectory;
 
         public string ResultsDirectory => _writer.ToString();
 
@@ -54,17 +55,17 @@ namespace Allure.Commons
         }
 
         [Obsolete("In the following releases, this method will be removed. Use json config file instead.")]
-        public AllureLifecycle ChangeResultsDirectory(string dirPath)
-        {
-            _writer = GetDefaultResultsWriter(dirPath);
-            return this;
-        }
-
-        [Obsolete("In the following releases, this method will be removed. Use json config file instead.")]
         public bool AllowEmptySuites
         {
             get => Config.Allure.AllowEmptySuites;
             set => Config.Allure.AllowEmptySuites = value;
+        }
+
+        [Obsolete("In the following releases, this method will be removed. Use json config file instead.")]
+        public AllureLifecycle ChangeResultsDirectory(string dirPath)
+        {
+            _writer = GetDefaultResultsWriter(dirPath);
+            return this;
         }
 
         public static long ToUnixTimestamp(DateTimeOffset value = default(DateTimeOffset))
@@ -342,7 +343,9 @@ namespace Allure.Commons
         public AllureLifecycle AddAttachment(string name, string type, string path)
         {
             var file = new FileInfo(path);
-            if (!file.Exists) throw new ArgumentException($"Cant find file at path \"{path}\".\nMake sure you are using the correct path to the file.");
+            if (!file.Exists)
+                throw new ArgumentException(
+                    $"Cant find file at path \"{path}\".\nMake sure you are using the correct path to the file.");
             var fileExtension = file.Extension;
             return AddAttachment(name, type, File.ReadAllBytes(path), fileExtension);
         }
@@ -416,12 +419,12 @@ namespace Allure.Commons
 
         internal IAllureResultsWriter GetDefaultResultsWriter(string outDir)
         {
-            if (outDir == AllureConstants.DefaultResultsFolder) outDir = Path.Combine(AllureAssemblyDir, AllureConstants.DefaultResultsFolder);
+            if (outDir == AllureConstants.DefaultResultsFolder)
+                outDir = Path.Combine(WorkspaceDir, AllureConstants.DefaultResultsFolder);
             if (outDir == "temp") outDir = Path.Combine(Path.GetTempPath(), AllureConstants.DefaultResultsFolder);
             return new FileSystemResultsWriter(outDir);
         }
 
         #endregion
-        
     }
 }

@@ -46,6 +46,7 @@ namespace Allure.Commons.Storage
                     sc = _currentThreadStepContext.Value;
                     _storage.GetOrAdd("Fake", new StepResult());
                 }
+
                 var rootStep = sc.Last.Value;
                 if (_currentThreadStepContext.Value == null || _currentThreadStepContext.Value.Count == 0)
                 {
@@ -89,7 +90,6 @@ namespace Allure.Commons.Storage
             var list = scs.ToList();
             if (!list.Any()) return;
             foreach (var nestedList in list)
-            {
                 try
                 {
                     nestedList.Clear();
@@ -98,7 +98,6 @@ namespace Allure.Commons.Storage
                 {
                     //nothing
                 }
-            }
         }
 
         public void StartStep(string uuid)

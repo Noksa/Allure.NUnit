@@ -25,6 +25,13 @@ namespace Allure.NUnit.Attributes
 
         private string Description { get; }
 
+        public void ApplyToContext(TestExecutionContext context)
+        {
+            var suite = context.CurrentTest;
+            if (!suite.IsSuite) return;
+            ReportHelper.AllTestsCurrentSuite = ReportHelper.GetAllTestsInSuite(suite);
+        }
+
 
         public ActionTargets Targets => ActionTargets.Suite;
 
@@ -73,13 +80,6 @@ namespace Allure.NUnit.Attributes
             AllureLifecycle.Instance.WriteTestContainer(test.Id);
         }
 
-        public void ApplyToContext(TestExecutionContext context)
-        {
-            var suite = context.CurrentTest;
-            if (!suite.IsSuite) return;
-            AllureReport.AllTestsCurrentSuite = Helper.GetAllTestsInSuite(suite);
-        }
-
         #region Privates
 
         private static void FailIgnoredTests(Dictionary<ITest, string> dict)
@@ -102,7 +102,7 @@ namespace Allure.NUnit.Attributes
                 };
 
                 AllureLifecycle.Instance.StartTestCase(testResult);
-                AllureReport.AddInfoInTestCase(pair.Key.Method.MethodInfo);
+                ReportHelper.AddInfoInTestCase(pair.Key.Method.MethodInfo);
                 var statusTest = pair.Key.RunState == RunState.Ignored ? Status.broken : Status.skipped;
                 AllureLifecycle.Instance.UpdateTestCase(x =>
                 {
