@@ -10,7 +10,6 @@ using Allure.Commons.Utils;
 using Allure.Commons.Writer;
 using Newtonsoft.Json;
 using NUnit.Framework;
-using NUnit.Framework.Interfaces;
 
 namespace Allure.Commons
 {
@@ -21,7 +20,7 @@ namespace Allure.Commons
         private readonly AllureStorage _storage;
         internal readonly Configuration Config;
         private IAllureResultsWriter _writer;
-        internal IList<ITest> _currentSuiteTests;
+
         private AllureLifecycle()
         {
             var dir = Path.GetDirectoryName(GetType().Assembly.Location);

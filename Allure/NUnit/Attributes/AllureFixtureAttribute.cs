@@ -14,7 +14,7 @@ using TestResult = Allure.Commons.Model.TestResult;
 namespace Allure.NUnit.Attributes
 {
     [AttributeUsage(AttributeTargets.Class)]
-    public class AllureFixtureAttribute : NUnitAttribute, ITestAction, IApplyToContext
+    public class AllureFixtureAttribute : NUnitAttribute, ITestAction
     {
         private readonly Dictionary<ITest, string> _ignoredTests = new Dictionary<ITest, string>();
 
@@ -24,13 +24,6 @@ namespace Allure.NUnit.Attributes
         }
 
         private string Description { get; }
-
-        public void ApplyToContext(TestExecutionContext context)
-        {
-            var suite = context.CurrentTest;
-            if (!suite.IsSuite) return;
-            AllureLifecycle.Instance._currentSuiteTests = ReportHelper.GetAllTestsInSuite(suite);
-        }
 
 
         public ActionTargets Targets => ActionTargets.Suite;
@@ -102,7 +95,7 @@ namespace Allure.NUnit.Attributes
                 };
 
                 AllureLifecycle.Instance.StartTestCase(testResult);
-                ReportHelper.AddInfoInTestCase(pair.Key.Method.MethodInfo);
+                ReportHelper.AddInfoInTestCase(pair.Key);
                 var statusTest = pair.Key.RunState == RunState.Ignored ? Status.broken : Status.skipped;
                 AllureLifecycle.Instance.UpdateTestCase(x =>
                 {

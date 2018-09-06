@@ -8,7 +8,6 @@ using Allure.Commons.Storage;
 using Allure.NUnit.Attributes;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
-using TestResult = Allure.Commons.Model.TestResult;
 
 namespace Allure.Commons.Helpers
 {
@@ -36,46 +35,27 @@ namespace Allure.Commons.Helpers
             return list;
         }
 
-        internal static void AddToTestCaseParametersInfo(int[] hideParams, int[] removeParams)
+        internal static void AddToTestCaseParametersInfo(ITest test, int[] hideParams, int[] removeParams)
         {
-            var list = new List<object>();
-            if (TestContext.CurrentContext.Result.Outcome.Site == FailureSite.SetUp &&
-                AllureLifecycle.Instance.Config.Allure.AllowEmptySuites && string.IsNullOrEmpty(TestContext.CurrentContext.Test.MethodName) && TestContext.CurrentContext.Result.Outcome.Status == TestStatus.Failed)
+            var listOfArgs = test.Arguments.ToList();
+            for (var i = 0; i < listOfArgs.Count; i++)
             {
-                if (AllureLifecycle.Instance._currentSuiteTests.Count != 0)
+                var paramNum = i + 1;
+                var strArg = listOfArgs[i].ToString();
+                var param = new Parameter
                 {
-                    foreach (var notStartedTest in AllureLifecycle.Instance._currentSuiteTests)
-                    {
-                        list = notStartedTest.Arguments.ToList();
-                        AddParam(list);
-                    }
-                }
-            }
-            else
-            {
-                list = TestContext.CurrentContext.Test.Arguments.ToList();
-                if (list.Count != 0) AddParam(list);
-            }
-
-            void AddParam(IReadOnlyList<object> listOfArgs)
-            {
-                for (var i = 0; i < listOfArgs.Count; i++)
-                {
-                    var paramNum = i + 1;
-                    var strArg = listOfArgs[i].ToString();
-                    var param = new Parameter
-                    {
-                        name = $"Parameter #{paramNum}, {listOfArgs[i].GetType().Name}",
-                        value = hideParams.Contains(paramNum) ? "Parameter is hidden" : strArg
-                    };
-                    if (removeParams.Contains(paramNum)) continue;
-                    AllureLifecycle.Instance.UpdateTestCase(AllureReport.TestUuid, x => x.parameters.Add(param));
-                }
+                    name = $"Parameter #{paramNum}, {listOfArgs[i].GetType().Name}",
+                    value = hideParams.Contains(paramNum) ? "Parameter is hidden" : strArg
+                };
+                if (removeParams.Contains(paramNum)) continue;
+                AllureLifecycle.Instance.UpdateTestCase(test.Properties.Get(AllureConstants.TestUuid).ToString(),
+                    x => x.parameters.Add(param));
             }
         }
 
-        internal static void AddInfoInTestCase(MethodInfo testMethod)
+        internal static void AddInfoInTestCase(ITest test)
         {
+            var testMethod = test.Method.MethodInfo;
             if (testMethod.DeclaringType != null)
             {
                 var testClassAttrs = testMethod.DeclaringType.GetCustomAttributes().ToList();
@@ -87,13 +67,13 @@ namespace Allure.Commons.Helpers
                             : Label.Suite(testMethod.Name));
                     });
 
-                AddInfoToTestCaseFromAttributes(testClassAttrs, false);
+                AddInfoToTestCaseFromAttributes(test, testClassAttrs, false);
             }
 
             var attrs = testMethod.GetCustomAttributes().ToList();
 
             var defects = attrs.Where(_ => _ is AllureIssueAttribute).Cast<AllureIssueAttribute>().Count();
-            AddInfoToTestCaseFromAttributes(attrs, true);
+            AddInfoToTestCaseFromAttributes(test, attrs, true);
             if (defects != 0)
                 AllureLifecycle.Instance.UpdateTestCase(_ =>
                 {
@@ -103,7 +83,8 @@ namespace Allure.Commons.Helpers
                 });
         }
 
-        internal static void AddInfoToTestCaseFromAttributes(IEnumerable<Attribute> attrs, bool testMethodAttrs)
+        internal static void AddInfoToTestCaseFromAttributes(ITest test, IEnumerable<Attribute> attrs,
+            bool testMethodAttrs)
         {
             var removeParamsNumber = new[] {-999};
             var hideParamsNumber = new[] {-999};
@@ -161,25 +142,9 @@ namespace Allure.Commons.Helpers
                         break;
                 }
 
-            if (testMethodAttrs) AddToTestCaseParametersInfo(hideParamsNumber, removeParamsNumber);
+            if (testMethodAttrs) AddToTestCaseParametersInfo(test, hideParamsNumber, removeParamsNumber);
         }
 
-        internal static void StopAllureLogging(MethodInfo methodInfo, string resultMsg, string stackTrace,
-            TestStatus status)
-        {
-            AddInfoInTestCase(methodInfo);
-            AllureLifecycle.Instance.UpdateTestCase(x =>
-            {
-                x.statusDetails = new StatusDetails
-                {
-                    message = MakeGoodErrorMsg(resultMsg),
-                    trace = stackTrace
-                };
-            });
-            AllureLifecycle.Instance.StopTestCase(x =>
-                x.status = GetNunitStatus(status));
-            AllureLifecycle.Instance.WriteTestCase(AllureReport.TestUuid);
-        }
 
         private static Status GetNunitStatus(TestStatus status)
         {
@@ -200,28 +165,44 @@ namespace Allure.Commons.Helpers
             }
         }
 
-        internal static void StartAllureLogging(string testName, string testId, string testFullName,
-            string testClassName,
-            string methodName)
+
+        internal static void StartAllureLogging(ITest test)
         {
+            var uuid = $"{test.Id}_{Guid.NewGuid():N}";
+            test.Properties.Set(AllureConstants.TestUuid, uuid);
             AllureStorage.MainThreadId = Thread.CurrentThread.ManagedThreadId;
-            AllureReport.TestUuid = $"{testId}_{Guid.NewGuid():N}";
             var testResult = new TestResult
             {
-                uuid = AllureReport.TestUuid,
-                name = testName,
-                fullName = testFullName,
+                uuid = uuid,
+                name = test.Name,
+                fullName = test.FullName,
                 labels = new List<Label>
                 {
                     Label.Thread(),
                     Label.Host(),
-                    Label.TestClass(testClassName),
-                    Label.TestMethod(methodName),
-                    Label.Package(testClassName)
+                    Label.TestClass(test.ClassName),
+                    Label.TestMethod(test.MethodName),
+                    Label.Package(test.ClassName)
                 },
-                historyId = testId
+                historyId = test.Id
             };
             AllureLifecycle.Instance.StartTestCase(testResult);
+        }
+
+        internal static void StopAllureLogging(ITest test)
+        {
+            AddInfoInTestCase(test);
+            AllureLifecycle.Instance.UpdateTestCase(x =>
+            {
+                x.statusDetails = new StatusDetails
+                {
+                    message = MakeGoodErrorMsg(TestContext.CurrentContext.Result.Message),
+                    trace = TestContext.CurrentContext.Result.StackTrace
+                };
+            });
+            AllureLifecycle.Instance.StopTestCase(x =>
+                x.status = GetNunitStatus(TestContext.CurrentContext.Result.Outcome.Status));
+            AllureLifecycle.Instance.WriteTestCase(test.Properties.Get(AllureConstants.TestUuid).ToString());
         }
 
         internal static string MakeGoodErrorMsg(string errorMsg)
