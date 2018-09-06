@@ -375,15 +375,15 @@ namespace Allure.Commons
                 case AttachFormat.Xml:
                     content = XDocument.Parse(content).ToString();
                     if (string.IsNullOrEmpty(fileExtension)) fileExtension = ".xml";
-                    return AddAttachment(name, "text/xml", File.ReadAllBytes(content), fileExtension);
+                    return AddAttachment(name, "text/xml", Encoding.UTF8.GetBytes(content), fileExtension);
                 case AttachFormat.Json:
                     var obj = JsonConvert.DeserializeObject(content);
                     content = JsonConvert.SerializeObject(obj, Formatting.Indented);
                     if (string.IsNullOrEmpty(fileExtension)) fileExtension = ".json";
-                    return AddAttachment(name, "application/json", File.ReadAllBytes(content), fileExtension);
+                    return AddAttachment(name, "application/json", Encoding.UTF8.GetBytes(content), fileExtension);
                 case AttachFormat.Txt:
                     if (string.IsNullOrEmpty(fileExtension)) fileExtension = ".txt";
-                    return AddAttachment(name, "text/txt", File.ReadAllBytes(content), fileExtension);
+                    return AddAttachment(name, "text/txt", Encoding.UTF8.GetBytes(content), fileExtension);
                 default:
                     throw new ArgumentException($"You cant use \"{type}\" argument at this method.");
             }
