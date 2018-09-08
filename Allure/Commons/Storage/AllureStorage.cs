@@ -16,8 +16,6 @@ namespace Allure.Commons.Storage
         [ThreadStatic] internal static LinkedList<string> TempContext;
         [ThreadStatic] internal static FixtureResult CurrentTestTearDownFixture;
         [ThreadStatic] internal static FixtureResult CurrentTestSetUpFixture;
-        [ThreadStatic] internal static FixtureResult CurrentOneTimeTearDownFixture;
-        [ThreadStatic] internal static FixtureResult CurrentOneSetUpFixture;
 
         private readonly ThreadLocal<LinkedList<string>> _currentThreadStepContext =
             new ThreadLocal<LinkedList<string>>(true);
