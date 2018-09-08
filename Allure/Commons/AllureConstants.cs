@@ -10,5 +10,6 @@
         public const string TestRunFileSuffix = "-testrun.json";
         public const string AttachmentFileSuffix = "-attachment";
         public const string TestUuid = "TestUuidProp";
+        public const string FixtureUuid = "FixtureUuidProp";
     }
 }

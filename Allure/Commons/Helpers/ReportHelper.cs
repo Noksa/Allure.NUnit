@@ -8,6 +8,8 @@ using Allure.Commons.Storage;
 using Allure.NUnit.Attributes;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
+using NUnit.Framework.Internal;
+using TestResult = Allure.Commons.Model.TestResult;
 
 namespace Allure.Commons.Helpers
 {
@@ -149,7 +151,7 @@ namespace Allure.Commons.Helpers
         }
 
 
-        private static Status GetNunitStatus(TestStatus status)
+        internal static Status GetNunitStatus(TestStatus status)
         {
             switch (status)
             {
@@ -169,10 +171,11 @@ namespace Allure.Commons.Helpers
         }
 
 
-        internal static void StartAllureLogging(ITest test)
+        internal static void StartAllureLogging(ITest test, TestFixture fixture)
         {
             var uuid = $"{test.Id}_{Guid.NewGuid():N}";
             test.Properties.Set(AllureConstants.TestUuid, uuid);
+            test.Properties.Set(AllureConstants.FixtureUuid, fixture.Id);
             AllureStorage.MainThreadId = Thread.CurrentThread.ManagedThreadId;
             var testResult = new TestResult
             {

@@ -41,7 +41,6 @@ namespace Allure.NUnit.Attributes
         public void AfterTest(ITest test)
         {
             AllureStorage.MainThreadId = Thread.CurrentThread.ManagedThreadId;
-
             bool IsIgnored(ITest oTest)
             {
                 return oTest.RunState == RunState.Ignored || oTest.RunState == RunState.Skipped;
@@ -63,10 +62,10 @@ namespace Allure.NUnit.Attributes
             }
 
             FailIgnoredTests(_ignoredTests);
-
+            var tests = ReportHelper.GetAllTestsInSuite(test);
             if (test.HasChildren)
                 AllureLifecycle.Instance.UpdateTestContainer(test.Id,
-                    t => t.children.AddRange(test.Tests.Select(s => s.Id)));
+                    t => t.children.AddRange(tests.Select(s => s.Properties.Get(AllureConstants.TestUuid).ToString())));
             if (!string.IsNullOrEmpty(Description))
                 AllureLifecycle.Instance.UpdateTestContainer(test.Id, t => t.description = Description);
             AllureLifecycle.Instance.StopTestContainer(test.Id);

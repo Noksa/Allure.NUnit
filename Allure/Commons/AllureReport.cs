@@ -1,7 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using Allure.Commons.Helpers;
 using Allure.Commons.Model;
+using Allure.Commons.Storage;
 using Allure.NUnit.Attributes;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
@@ -16,24 +20,35 @@ namespace Allure.Commons
     public abstract class AllureReport
     {
         private IList<ITest> _currentSuiteTests;
+        private TestFixture _currentSuite;
 
         [SetUp]
         protected void StartAllureLogging()
         {
-            ReportHelper.StartAllureLogging(TestExecutionContext.CurrentContext.CurrentTest);
+            ReportHelper.StartAllureLogging(TestExecutionContext.CurrentContext.CurrentTest, _currentSuite);
+            AllureStorage.CurrentTestTearDownFixture = null;
+            AllureStorage.CurrentTestSetUpFixture = null;
+            AllureStorage.TempContext =
+                new LinkedList<string>(AllureLifecycle.Instance.Storage.CurrentThreadStepContext);
         }
 
         [TearDown]
         protected void StopAllureLogging()
         {
-            ReportHelper.StopAllureLogging(TestExecutionContext.CurrentContext.CurrentTest);
+            if (AllureStorage.CurrentTestTearDownFixture != null)
+            {
+                AllureLifecycle.Instance.StopFixture(q =>
+                    q.status = ReportHelper.GetNunitStatus(TestContext.CurrentContext.Result.Outcome.Status));
+                AllureLifecycle.Instance.Storage.CurrentThreadStepContext = AllureStorage.TempContext;
+                ReportHelper.StopAllureLogging(TestExecutionContext.CurrentContext.CurrentTest);
+            }
         }
 
         [OneTimeSetUp]
         public void OneTimeSetUp()
         {
-            var suite = TestExecutionContext.CurrentContext.CurrentTest;
-            var allTests = ReportHelper.GetAllTestsInSuite(suite);
+            _currentSuite = (TestFixture) TestExecutionContext.CurrentContext.CurrentTest;
+            var allTests = ReportHelper.GetAllTestsInSuite(_currentSuite);
             _currentSuiteTests = allTests;
         }
 
@@ -53,7 +68,7 @@ namespace Allure.Commons
                 AllureLifecycle.Instance.StartTestContainer(fixture);
                 foreach (var test in _currentSuiteTests)
                 {
-                    ReportHelper.StartAllureLogging(test);
+                    ReportHelper.StartAllureLogging(test, _currentSuite);
                     var uuid = $"{Guid.NewGuid():N}";
                     AllureLifecycle.Instance.StartStep("The test was not started", uuid);
                     AllureLifecycle.Instance.UpdateStep(q =>
