@@ -17,8 +17,8 @@ namespace Allure.Commons
     {
         private static readonly object Lockobj = new object();
         private static AllureLifecycle _instance;
-        internal readonly AllureStorage Storage;
         internal readonly Configuration Config;
+        internal readonly AllureStorage Storage;
         private IAllureResultsWriter _writer;
 
         private AllureLifecycle()
@@ -333,7 +333,8 @@ namespace Allure.Commons
                 case AttachFormat.Txt:
                     return AddAttachment(name, type, asString);
                 case AttachFormat.Video:
-                    throw new ArgumentException($"You cant use \"{type}\" argument at this method. Try use method with FileInfo parameter.");
+                    throw new ArgumentException(
+                        $"You cant use \"{type}\" argument at this method. Try use method with FileInfo parameter.");
                 default:
                     throw new ArgumentOutOfRangeException(nameof(type), type, null);
             }
@@ -371,7 +372,8 @@ namespace Allure.Commons
             {
                 case AttachFormat.ImagePng:
                 case AttachFormat.Video:
-                    throw new ArgumentException($"You cant use \"{type}\" argument at this method. Try use method with FileInfo or with bytes array parameter.");
+                    throw new ArgumentException(
+                        $"You cant use \"{type}\" argument at this method. Try use method with FileInfo or with bytes array parameter.");
                 case AttachFormat.Xml:
                     content = XDocument.Parse(content).ToString();
                     if (string.IsNullOrEmpty(fileExtension)) fileExtension = ".xml";

@@ -6,7 +6,6 @@ using System.Threading;
 using Allure.Commons.Helpers;
 using Allure.Commons.Model;
 using NUnit.Framework;
-using NUnit.Framework.Interfaces;
 using NUnit.Framework.Internal;
 
 namespace Allure.Commons.Storage
@@ -123,7 +122,6 @@ namespace Allure.Commons.Storage
             var methodType = BeforeAfterFixturesHelper.GetTypeOfCurrentTestMethod();
 
             if (methodType == BeforeAfterFixturesHelper.MethodType.Setup)
-            {
                 if (CurrentTestSetUpFixture == null)
                 {
                     CurrentTestSetUpFixture = new FixtureResult(); // dummy
@@ -133,37 +131,34 @@ namespace Allure.Commons.Storage
                         $"{TestExecutionContext.CurrentContext.CurrentTest.Properties.Get(AllureConstants.TestUuid)}-before",
                         CurrentTestSetUpFixture);
                 }
-            }
 
             if (methodType == BeforeAfterFixturesHelper.MethodType.TestBody)
-            {
                 if (CurrentTestSetUpFixture != null)
                 {
                     AllureLifecycle.Instance.StopFixture(q =>
                     {
-                        var status =  ReportHelper.GetNunitStatus(TestContext.CurrentContext.Result.Outcome.Status);
+                        var status = ReportHelper.GetNunitStatus(TestContext.CurrentContext.Result.Outcome.Status);
                         q.status = status;
                     });
                     CurrentTestSetUpFixture = null;
                     CurrentThreadStepContext.Clear();
                     CurrentThreadStepContext = TempContext;
                 }
-            }
 
             if (methodType == BeforeAfterFixturesHelper.MethodType.Teardown)
-            {
                 if (CurrentTestTearDownFixture == null)
                 {
                     if (TempContext.Count > 1 && !TempContext.Contains(TestExecutionContext.CurrentContext.CurrentTest
                             .Properties.Get(AllureConstants.TestUuid).ToString()))
-                    {
                         TempContext = new LinkedList<string>(CurrentThreadStepContext);
-                    }
 
                     CurrentTestTearDownFixture = new FixtureResult(); // dummy
-                    AllureLifecycle.Instance.StartAfterFixture(TestExecutionContext.CurrentContext.CurrentTest.Properties.Get(AllureConstants.FixtureUuid).ToString(), $"{TestExecutionContext.CurrentContext.CurrentTest.Properties.Get(AllureConstants.TestUuid)}-after", CurrentTestTearDownFixture);
+                    AllureLifecycle.Instance.StartAfterFixture(
+                        TestExecutionContext.CurrentContext.CurrentTest.Properties.Get(AllureConstants.FixtureUuid)
+                            .ToString(),
+                        $"{TestExecutionContext.CurrentContext.CurrentTest.Properties.Get(AllureConstants.TestUuid)}-after",
+                        CurrentTestTearDownFixture);
                 }
-            }
 
             var stepId = CurrentThreadStepContext.First?.Value;
             return stepId;

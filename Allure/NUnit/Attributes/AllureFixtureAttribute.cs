@@ -41,6 +41,7 @@ namespace Allure.NUnit.Attributes
         public void AfterTest(ITest test)
         {
             AllureStorage.MainThreadId = Thread.CurrentThread.ManagedThreadId;
+
             bool IsIgnored(ITest oTest)
             {
                 return oTest.RunState == RunState.Ignored || oTest.RunState == RunState.Skipped;

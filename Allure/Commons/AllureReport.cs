@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Runtime.CompilerServices;
 using Allure.Commons.Helpers;
 using Allure.Commons.Model;
 using Allure.Commons.Storage;
@@ -19,8 +16,8 @@ namespace Allure.Commons
     [AllureFixture]
     public abstract class AllureReport
     {
-        private IList<ITest> _currentSuiteTests;
         private TestFixture _currentSuite;
+        private IList<ITest> _currentSuiteTests;
 
         [SetUp]
         protected void StartAllureLogging()
@@ -40,8 +37,8 @@ namespace Allure.Commons
                 AllureLifecycle.Instance.StopFixture(q =>
                     q.status = ReportHelper.GetNunitStatus(TestContext.CurrentContext.Result.Outcome.Status));
                 AllureLifecycle.Instance.Storage.CurrentThreadStepContext = AllureStorage.TempContext;
-                ReportHelper.StopAllureLogging(TestExecutionContext.CurrentContext.CurrentTest);
             }
+            ReportHelper.StopAllureLogging(TestExecutionContext.CurrentContext.CurrentTest);
         }
 
         [OneTimeSetUp]
