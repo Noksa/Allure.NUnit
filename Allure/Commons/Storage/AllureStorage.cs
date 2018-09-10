@@ -124,7 +124,7 @@ namespace Allure.Commons.Storage
                 {
                     CurrentTestSetUpFixture = new FixtureResult(); // dummy
                     AllureLifecycle.Instance.StartBeforeFixture(
-                        TestExecutionContext.CurrentContext.CurrentTest.Properties.Get(AllureConstants.FixtureUuid)
+                        TestExecutionContext.CurrentContext.CurrentTest.Properties.Get(AllureConstants.TestContainerUuid)
                             .ToString(),
                         $"{TestExecutionContext.CurrentContext.CurrentTest.Properties.Get(AllureConstants.TestUuid)}-before",
                         CurrentTestSetUpFixture);
@@ -146,13 +146,11 @@ namespace Allure.Commons.Storage
             if (methodType == BeforeAfterFixturesHelper.MethodType.Teardown)
                 if (CurrentTestTearDownFixture == null)
                 {
-                    if (TempContext.Count > 1 && !TempContext.Contains(TestExecutionContext.CurrentContext.CurrentTest
-                            .Properties.Get(AllureConstants.TestUuid).ToString()))
-                        TempContext = new LinkedList<string>(CurrentThreadStepContext);
+                        TempContext = new LinkedList<string>(CurrentThreadStepContext.ToList());
 
                     CurrentTestTearDownFixture = new FixtureResult(); // dummy
                     AllureLifecycle.Instance.StartAfterFixture(
-                        TestExecutionContext.CurrentContext.CurrentTest.Properties.Get(AllureConstants.FixtureUuid)
+                        TestExecutionContext.CurrentContext.CurrentTest.Properties.Get(AllureConstants.TestContainerUuid)
                             .ToString(),
                         $"{TestExecutionContext.CurrentContext.CurrentTest.Properties.Get(AllureConstants.TestUuid)}-after",
                         CurrentTestTearDownFixture);

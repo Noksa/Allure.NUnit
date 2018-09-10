@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Allure.Commons.Helpers;
 using Allure.Commons.Model;
 using Allure.Commons.Storage;
@@ -22,11 +23,12 @@ namespace Allure.Commons
         [SetUp]
         protected void StartAllureLogging()
         {
+            Verify.Clear();
             ReportHelper.StartAllureLogging(TestExecutionContext.CurrentContext.CurrentTest, _currentSuite);
             AllureStorage.CurrentTestTearDownFixture = null;
             AllureStorage.CurrentTestSetUpFixture = null;
             AllureStorage.TempContext =
-                new LinkedList<string>(AllureLifecycle.Instance.Storage.CurrentThreadStepContext);
+                new LinkedList<string>(AllureLifecycle.Instance.Storage.CurrentThreadStepContext.ToList());
         }
 
         [TearDown]
@@ -39,6 +41,7 @@ namespace Allure.Commons
                 AllureLifecycle.Instance.Storage.CurrentThreadStepContext = AllureStorage.TempContext;
             }
             ReportHelper.StopAllureLogging(TestExecutionContext.CurrentContext.CurrentTest);
+
         }
 
         [OneTimeSetUp]

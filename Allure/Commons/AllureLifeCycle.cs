@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Xml.Linq;
+using Allure.Commons.Helpers;
 using Allure.Commons.Model;
 using Allure.Commons.Storage;
 using Allure.Commons.Utils;
@@ -20,9 +21,11 @@ namespace Allure.Commons
         internal readonly Configuration Config;
         internal readonly AllureStorage Storage;
         private IAllureResultsWriter _writer;
+        public Verify Verify { get; }
 
         private AllureLifecycle()
         {
+            Verify = new Verify();
             var dir = Path.GetDirectoryName(GetType().Assembly.Location);
             using (var r = new StreamReader(Path.Combine(dir, AllureConstants.ConfigFilename)))
             {
