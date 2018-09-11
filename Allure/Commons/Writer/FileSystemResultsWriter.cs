@@ -46,7 +46,11 @@ namespace Allure.Commons.Writer
             {
                 mutex.WaitOne();
                 var directory = new DirectoryInfo(_outputDirectory);
-                foreach (var file in directory.GetFiles()) file.Delete();
+                foreach (var file in directory.GetFiles())
+                {
+                    if (file.Name.ToLower().Equals("categories.json")) continue;
+                    file.Delete();
+                }
                 mutex.ReleaseMutex();
             }
         }

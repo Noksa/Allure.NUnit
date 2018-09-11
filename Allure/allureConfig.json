@@ -2,6 +2,6 @@
   "allure": {
     "directory": "allure-results",
     "allowEmptySuites": false,
-    "enableParameters" : false 
+    "enableParameters": false
   }
 }

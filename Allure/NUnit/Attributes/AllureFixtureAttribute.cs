@@ -30,12 +30,14 @@ namespace Allure.NUnit.Attributes
 
         public void BeforeTest(ITest test)
         {
-            var fixture = new TestResultContainer
+            var tests = ReportHelper.GetAllTestsInSuite(test);
+            foreach (var nestedTest in tests)
             {
-                uuid = test.Id,
-                name = test.ClassName
-            };
-            AllureLifecycle.Instance.StartTestContainer(fixture);
+                var uuid = $"{nestedTest.Id}_{Guid.NewGuid():N}";
+                nestedTest.Properties.Set(AllureConstants.TestContainerUuid, $"{uuid}-{test.Id}-container");
+                nestedTest.Properties.Set(AllureConstants.TestUuid, $"{uuid}-{test.Id}-test");
+                nestedTest.Properties.Set(AllureConstants.FixtureUuid, $"{test.Id}-fixture");
+            }
         }
 
         public void AfterTest(ITest test)
@@ -63,14 +65,6 @@ namespace Allure.NUnit.Attributes
             }
 
             FailIgnoredTests(_ignoredTests);
-
-            if (test.HasChildren)
-                AllureLifecycle.Instance.UpdateTestContainer(test.Id,
-                    t => t.children.AddRange(test.Tests.Select(s => s.Id)));
-            if (!string.IsNullOrEmpty(Description))
-                AllureLifecycle.Instance.UpdateTestContainer(test.Id, t => t.description = Description);
-            AllureLifecycle.Instance.StopTestContainer(test.Id);
-            AllureLifecycle.Instance.WriteTestContainer(test.Id);
         }
 
         #region Privates
@@ -79,9 +73,17 @@ namespace Allure.NUnit.Attributes
         {
             foreach (var pair in dict)
             {
+                var ourFixture = new TestResultContainer
+                {
+                    uuid = pair.Key.Properties.Get(AllureConstants.TestContainerUuid).ToString(),
+                    name = pair.Key.ClassName
+                };
+                AllureLifecycle.Instance.StartTestContainer(ourFixture);
+
+                var realUuid = pair.Key.Properties.Get(AllureConstants.TestUuid).ToString();
                 var testResult = new TestResult
                 {
-                    uuid = pair.Key.Id,
+                    uuid = realUuid,
                     name = pair.Key.Name,
                     fullName = pair.Key.FullName,
                     labels = new List<Label>
@@ -93,10 +95,12 @@ namespace Allure.NUnit.Attributes
                         Label.Package(pair.Key.ClassName)
                     }
                 };
-
+                AllureLifecycle.Instance.StartTestContainer(ourFixture);
+                AllureLifecycle.Instance.UpdateTestContainer(pair.Key.Properties.Get(AllureConstants.TestContainerUuid)
+                    .ToString(), q => q.children.Add(pair.Key.Properties.Get(AllureConstants.TestUuid)
+                    .ToString()));
                 AllureLifecycle.Instance.StartTestCase(testResult);
                 ReportHelper.AddInfoInTestCase(pair.Key);
-                var statusTest = pair.Key.RunState == RunState.Ignored ? Status.broken : Status.skipped;
                 AllureLifecycle.Instance.UpdateTestCase(x =>
                 {
                     var subSuites = x.labels.Where(lbl => lbl.name.ToLower().Equals("subsuite")).ToList();
@@ -105,13 +109,17 @@ namespace Allure.NUnit.Attributes
                 });
                 AllureLifecycle.Instance.StopTestCase(_ =>
                 {
-                    _.status = statusTest;
+                    _.status = Status.skipped;
                     _.statusDetails = new StatusDetails
                     {
                         message = $"Test was ignored by reason: {pair.Value}"
                     };
                 });
                 AllureLifecycle.Instance.WriteTestCase(testResult.uuid);
+                AllureLifecycle.Instance.StopTestContainer(pair.Key.Properties.Get(AllureConstants.TestContainerUuid)
+                    .ToString());
+                AllureLifecycle.Instance.WriteTestContainer(pair.Key.Properties.Get(AllureConstants.TestContainerUuid)
+                    .ToString());
             }
         }
 

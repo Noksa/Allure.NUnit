@@ -8,6 +8,8 @@ using Allure.Commons.Storage;
 using Allure.NUnit.Attributes;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
+using NUnit.Framework.Internal;
+using TestResult = Allure.Commons.Model.TestResult;
 
 namespace Allure.Commons.Helpers
 {
@@ -149,7 +151,7 @@ namespace Allure.Commons.Helpers
         }
 
 
-        private static Status GetNunitStatus(TestStatus status)
+        internal static Status GetNunitStatus(TestStatus status)
         {
             switch (status)
             {
@@ -169,14 +171,20 @@ namespace Allure.Commons.Helpers
         }
 
 
-        internal static void StartAllureLogging(ITest test)
+        internal static void StartAllureLogging(ITest test, TestFixture fixture)
         {
-            var uuid = $"{test.Id}_{Guid.NewGuid():N}";
-            test.Properties.Set(AllureConstants.TestUuid, uuid);
+            var ourFixture = new TestResultContainer
+            {
+                uuid = test.Properties.Get(AllureConstants.TestContainerUuid).ToString(),
+                name = test.ClassName
+            };
+            AllureLifecycle.Instance.StartTestContainer(ourFixture);
+
+            var realUuid = test.Properties.Get(AllureConstants.TestUuid).ToString();
             AllureStorage.MainThreadId = Thread.CurrentThread.ManagedThreadId;
             var testResult = new TestResult
             {
-                uuid = uuid,
+                uuid = realUuid,
                 name = test.Name,
                 fullName = test.FullName,
                 labels = new List<Label>
@@ -194,6 +202,7 @@ namespace Allure.Commons.Helpers
 
         internal static void StopAllureLogging(ITest test)
         {
+            var assertsCount = Verify.CurrentTestAsserts.Count;
             AddInfoInTestCase(test);
             AllureLifecycle.Instance.UpdateTestCase(x =>
             {
@@ -204,8 +213,18 @@ namespace Allure.Commons.Helpers
                 };
             });
             AllureLifecycle.Instance.StopTestCase(x =>
-                x.status = GetNunitStatus(TestContext.CurrentContext.Result.Outcome.Status));
+            {
+                x.status = assertsCount != 0 ? Status.failed : GetNunitStatus(TestContext.CurrentContext.Result.Outcome.Status);
+            });
             AllureLifecycle.Instance.WriteTestCase(test.Properties.Get(AllureConstants.TestUuid).ToString());
+            AllureLifecycle.Instance.UpdateTestContainer(test.Properties.Get(AllureConstants.TestContainerUuid).ToString(),
+                q =>
+                {
+                    q.children.Add(test.Properties.Get(AllureConstants.TestUuid).ToString());
+                    
+                });
+            AllureLifecycle.Instance.StopTestContainer(test.Properties.Get(AllureConstants.TestContainerUuid).ToString());
+            AllureLifecycle.Instance.WriteTestContainer(test.Properties.Get(AllureConstants.TestContainerUuid).ToString());
         }
 
         internal static string MakeGoodErrorMsg(string errorMsg)

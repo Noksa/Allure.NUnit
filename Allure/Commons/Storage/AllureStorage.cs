@@ -3,14 +3,19 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using Allure.Commons.Helpers;
 using Allure.Commons.Model;
 using NUnit.Framework;
+using NUnit.Framework.Internal;
 
 namespace Allure.Commons.Storage
 {
     internal class AllureStorage
     {
         [ThreadStatic] private static int _mainThreadId;
+        [ThreadStatic] internal static LinkedList<string> TempContext;
+        [ThreadStatic] internal static FixtureResult CurrentTestTearDownFixture;
+        [ThreadStatic] internal static FixtureResult CurrentTestSetUpFixture;
 
         private readonly ThreadLocal<LinkedList<string>> _currentThreadStepContext =
             new ThreadLocal<LinkedList<string>>(true);
@@ -26,7 +31,7 @@ namespace Allure.Commons.Storage
         internal static bool IsMainThread => Thread.CurrentThread.ManagedThreadId == _mainThreadId;
 
 
-        private LinkedList<string> CurrentThreadStepContext
+        internal LinkedList<string> CurrentThreadStepContext
         {
             get
             {
@@ -39,13 +44,6 @@ namespace Allure.Commons.Storage
 
                 var sc = _currentThreadStepContext.Values.FirstOrDefault(
                     _ => _.Any(d => d == TestContext.CurrentContext.Test.ID));
-                if (sc == null)
-                {
-                    _currentThreadStepContext.Value = new LinkedList<string>();
-                    _currentThreadStepContext.Value.AddFirst("Fake");
-                    sc = _currentThreadStepContext.Value;
-                    _storage.GetOrAdd("Fake", new StepResult());
-                }
 
                 var rootStep = sc.Last.Value;
                 if (_currentThreadStepContext.Value == null || _currentThreadStepContext.Value.Count == 0)
@@ -63,6 +61,8 @@ namespace Allure.Commons.Storage
 
                 return _currentThreadStepContext.Value;
             }
+
+            set => _currentThreadStepContext.Value = value;
         }
 
         public T Get<T>(string uuid)
@@ -117,11 +117,47 @@ namespace Allure.Commons.Storage
 
         public string GetCurrentStep()
         {
+            var methodType = BeforeAfterFixturesHelper.GetTypeOfCurrentTestMethod();
+
+            if (methodType == BeforeAfterFixturesHelper.MethodType.Setup)
+                if (CurrentTestSetUpFixture == null)
+                {
+                    CurrentTestSetUpFixture = new FixtureResult(); // dummy
+                    AllureLifecycle.Instance.StartBeforeFixture(
+                        TestExecutionContext.CurrentContext.CurrentTest.Properties.Get(AllureConstants.TestContainerUuid)
+                            .ToString(),
+                        $"{TestExecutionContext.CurrentContext.CurrentTest.Properties.Get(AllureConstants.TestUuid)}-before",
+                        CurrentTestSetUpFixture);
+                }
+
+            if (methodType == BeforeAfterFixturesHelper.MethodType.TestBody)
+                if (CurrentTestSetUpFixture != null)
+                {
+                    AllureLifecycle.Instance.StopFixture(q =>
+                    {
+                        var status = ReportHelper.GetNunitStatus(TestContext.CurrentContext.Result.Outcome.Status);
+                        q.status = status;
+                    });
+                    CurrentTestSetUpFixture = null;
+                    CurrentThreadStepContext.Clear();
+                    CurrentThreadStepContext = TempContext;
+                }
+
+            if (methodType == BeforeAfterFixturesHelper.MethodType.Teardown)
+                if (CurrentTestTearDownFixture == null)
+                {
+                        TempContext = new LinkedList<string>(CurrentThreadStepContext.ToList());
+
+                    CurrentTestTearDownFixture = new FixtureResult(); // dummy
+                    AllureLifecycle.Instance.StartAfterFixture(
+                        TestExecutionContext.CurrentContext.CurrentTest.Properties.Get(AllureConstants.TestContainerUuid)
+                            .ToString(),
+                        $"{TestExecutionContext.CurrentContext.CurrentTest.Properties.Get(AllureConstants.TestUuid)}-after",
+                        CurrentTestTearDownFixture);
+                }
+
             var stepId = CurrentThreadStepContext.First?.Value;
-            if (!string.IsNullOrEmpty(stepId)) return stepId;
-            CurrentThreadStepContext.AddFirst("Fake");
-            _storage.GetOrAdd("Fake", new StepResult());
-            return CurrentThreadStepContext.First.Value;
+            return stepId;
         }
 
         public void AddStep(string parentUuid, string uuid, StepResult stepResult)
