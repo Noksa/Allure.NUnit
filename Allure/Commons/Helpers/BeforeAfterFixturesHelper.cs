@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using NUnit.Framework;
@@ -12,9 +13,24 @@ namespace Allure.Commons.Helpers
             var stackTrace = new StackTrace();
             var frames = stackTrace.GetFrames();
             var frame = frames?.FirstOrDefault(w =>
-                w.GetMethod().DeclaringType != typeof(AllureReport) && w.GetMethod().GetCustomAttributes().Any(attr =>
-                    attr is SetUpAttribute || attr is OneTimeSetUpAttribute || attr is TearDownAttribute ||
-                    attr is OneTimeTearDownAttribute));
+            {
+                try
+                {
+                    var temp = w.GetMethod().CustomAttributes;
+                }
+                catch (Exception)
+                {
+                    return false;
+                }
+
+                var result = w.GetMethod().DeclaringType != typeof(AllureReport) &&
+                             w.GetMethod().GetCustomAttributes().Any(
+                                 attr =>
+                                     attr is SetUpAttribute || attr is OneTimeSetUpAttribute ||
+                                     attr is TearDownAttribute ||
+                                     attr is OneTimeTearDownAttribute);
+                return result;
+            });
             if (frame == null) return MethodType.TestBody;
             var method = frame.GetMethod();
             var attrs = method.GetCustomAttributes();
