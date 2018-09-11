@@ -21,6 +21,8 @@ namespace Allure.Commons
         internal readonly Configuration Config;
         internal readonly AllureStorage Storage;
         private IAllureResultsWriter _writer;
+        internal static Action GlobalActionInException;
+        [ThreadStatic] internal static Action CurrentTestActionInException;
         public Verify Verify { get; }
 
         private AllureLifecycle()
@@ -217,6 +219,113 @@ namespace Allure.Commons
 
         #region Step
 
+        public AllureLifecycle SetGlobalActionInException(Action action)
+        {
+            GlobalActionInException = action;
+            return this;
+        }
+
+        public AllureLifecycle SetCurrentTestActionInException(Action action)
+        {
+            CurrentTestActionInException = action;
+            return this;
+        }
+
+        public void RunStep(string stepName, Action stepBody)
+        {
+            var assertsBefore = TestContext.CurrentContext.Result.Assertions.Count();
+            var assertListCountBefore = Verify.CurrentTestAsserts.Count;
+            Exception throwedEx = null;
+            var uuid = $"{Guid.NewGuid():N}";
+            var stepResult = new StepResult
+            {
+                name = stepName,
+                start = ToUnixTimestamp(DateTimeOffset.Now)
+            };
+            Instance.StartStep(uuid, stepResult);
+            try
+            {
+                stepBody.Invoke();
+                var assertListCountAfter = Verify.CurrentTestAsserts.Count;
+                if (assertListCountAfter != assertListCountBefore)
+                    Instance.UpdateStep(uuid, result => result.status = Status.failed);
+                else
+                    Instance.UpdateStep(uuid, result => result.status = Status.passed);
+            }
+            catch (Exception e)
+            {
+                throwedEx = e;
+                if (throwedEx.Data.Contains("Rethrow"))
+                {
+                    Instance.UpdateStep(uuid, _ => _.status = Status.failed);
+                }
+
+                else
+                {
+                    throwedEx.Data.Add("Rethrow", true);
+                    Instance.UpdateStep(uuid, _ => _.status = Status.failed);
+                    Instance.MakeStepWithExMessage(assertsBefore, stepName, e);
+                    CurrentTestActionInException?.Invoke();
+                    GlobalActionInException?.Invoke();
+                }
+            }
+            finally
+            {
+                Instance.StopStep(uuid);
+            }
+
+            if (throwedEx != null) throw throwedEx;
+        }
+
+
+        public TResult RunStep<TResult>(string stepName, Func<TResult> stepBody)
+        {
+            var assertsBefore = TestContext.CurrentContext.Result.Assertions.Count();
+            var assertListCountBefore = Verify.CurrentTestAsserts.Count;
+            Exception throwedEx = null;
+            var resultFunc = default(TResult);
+            var uuid = $"{Guid.NewGuid():N}";
+            var stepResult = new StepResult
+            {
+                name = stepName,
+                start = ToUnixTimestamp(DateTimeOffset.Now)
+            };
+            Instance.StartStep(uuid, stepResult);
+            try
+            {
+                resultFunc = stepBody();
+                var assertListCountAfter = Verify.CurrentTestAsserts.Count;
+                if (assertListCountAfter != assertListCountBefore)
+                    Instance.UpdateStep(uuid, result => result.status = Status.failed);
+                else
+                    Instance.UpdateStep(uuid, result => result.status = Status.passed);
+            }
+            catch (Exception e)
+            {
+                throwedEx = e;
+                if (throwedEx.Data.Contains("Rethrow"))
+                {
+                    Instance.UpdateStep(uuid, _ => _.status = Status.failed);
+                }
+
+                else
+                {
+                    throwedEx.Data.Add("Rethrow", true);
+                    Instance.UpdateStep(uuid, _ => _.status = Status.failed);
+                    Instance.MakeStepWithExMessage(assertsBefore, stepName, e);
+                    CurrentTestActionInException?.Invoke();
+                    GlobalActionInException?.Invoke();
+                }
+            }
+            finally
+            {
+                Instance.StopStep(uuid);
+            }
+
+            if (throwedEx != null) throw throwedEx;
+            return resultFunc;
+        }
+
         public AllureLifecycle StartStep(string uuid, StepResult result)
         {
             StartStep(Storage.GetCurrentStep(), uuid, result);
@@ -228,11 +337,8 @@ namespace Allure.Commons
             var exMsg = ex.Message;
             if (assertsBeforeCount != TestContext.CurrentContext.Result.Assertions.Count())
             {
-                exMsg = TestContext.CurrentContext.Result.Assertions.Last().Message.Trim();
-                var firstStepIndex = exMsg.IndexOf(stepName, StringComparison.Ordinal);
-                if (firstStepIndex != -1) exMsg = exMsg.Substring(stepName.Length);
-                var indexOfTire = exMsg.IndexOf('-');
-                if (indexOfTire != -1) exMsg = exMsg.Substring(0, indexOfTire).Trim();
+                exMsg = MakeExMessageWithoutStepName(stepName, TestContext.CurrentContext.Result.Assertions.Last().Message
+                    .Trim());
                 if (string.IsNullOrEmpty(exMsg)) return this;
                 StartStepAndFailIt(exMsg);
             }
@@ -242,14 +348,29 @@ namespace Allure.Commons
             }
             else if (ex.InnerException == null)
             {
+                exMsg = MakeExMessageWithoutStepName(stepName, exMsg);
                 StartStepAndFailIt(exMsg);
             }
             else
             {
-                GetInnerExceptions(ex).ToList().ForEach(inEx => StartStepAndFailIt(inEx.Message));
+                GetInnerExceptions(ex).ToList().ForEach(inEx =>
+                {
+                    var msg = MakeExMessageWithoutStepName(stepName, inEx.Message);
+                    StartStepAndFailIt(msg);
+                });
             }
 
             return this;
+        }
+
+        private string MakeExMessageWithoutStepName(string stepName, string exMsg)
+        {
+            exMsg = exMsg.Trim();
+            var firstStepIndex = exMsg.IndexOf(stepName, StringComparison.Ordinal);
+            if (firstStepIndex != -1) exMsg = exMsg.Substring(stepName.Length);
+            var indexOfTire = exMsg.IndexOf('-');
+            if (indexOfTire != -1) exMsg = exMsg.Substring(0, indexOfTire).Trim();
+            return exMsg;
         }
 
         private AllureLifecycle StartStepAndFailIt(string stepName)

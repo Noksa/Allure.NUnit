@@ -24,12 +24,14 @@ namespace Allure.Commons
         protected void StartAllureLogging()
         {
             Verify.Clear();
+            AllureLifecycle.CurrentTestActionInException = null;
             ReportHelper.StartAllureLogging(TestExecutionContext.CurrentContext.CurrentTest, _currentSuite);
             AllureStorage.CurrentTestTearDownFixture = null;
             AllureStorage.CurrentTestSetUpFixture = null;
             AllureStorage.TempContext =
                 new LinkedList<string>(AllureLifecycle.Instance.Storage.CurrentThreadStepContext.ToList());
         }
+
 
         [TearDown]
         protected void StopAllureLogging()
@@ -40,8 +42,8 @@ namespace Allure.Commons
                     q.status = ReportHelper.GetNunitStatus(TestContext.CurrentContext.Result.Outcome.Status));
                 AllureLifecycle.Instance.Storage.CurrentThreadStepContext = AllureStorage.TempContext;
             }
-            ReportHelper.StopAllureLogging(TestExecutionContext.CurrentContext.CurrentTest);
 
+            ReportHelper.StopAllureLogging(TestExecutionContext.CurrentContext.CurrentTest);
         }
 
         [OneTimeSetUp]

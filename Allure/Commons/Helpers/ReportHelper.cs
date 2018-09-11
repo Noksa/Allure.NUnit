@@ -202,6 +202,7 @@ namespace Allure.Commons.Helpers
 
         internal static void StopAllureLogging(ITest test)
         {
+            var assertsCount = Verify.CurrentTestAsserts.Count;
             AddInfoInTestCase(test);
             AllureLifecycle.Instance.UpdateTestCase(x =>
             {
@@ -212,7 +213,9 @@ namespace Allure.Commons.Helpers
                 };
             });
             AllureLifecycle.Instance.StopTestCase(x =>
-                x.status = GetNunitStatus(TestContext.CurrentContext.Result.Outcome.Status));
+            {
+                x.status = assertsCount != 0 ? Status.failed : GetNunitStatus(TestContext.CurrentContext.Result.Outcome.Status);
+            });
             AllureLifecycle.Instance.WriteTestCase(test.Properties.Get(AllureConstants.TestUuid).ToString());
             AllureLifecycle.Instance.UpdateTestContainer(test.Properties.Get(AllureConstants.TestContainerUuid).ToString(),
                 q =>

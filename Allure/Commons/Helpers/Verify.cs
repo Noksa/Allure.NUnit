@@ -20,10 +20,7 @@ namespace Allure.Commons.Helpers
         }
 
         #endregion
-
-        private Action _actionInException;
-        [ThreadStatic] private static Action _localActionInException;
-
+        
         #region Help members
 
         private static readonly ThreadLocal<List<Exception>>
@@ -31,18 +28,6 @@ namespace Allure.Commons.Helpers
 
         public static List<Exception> CurrentTestAsserts =>
             AssertsListThreadLocal.Value ?? (AssertsListThreadLocal.Value = new List<Exception>());
-
-        public Verify SetGlobalActionInException(Action action)
-        {
-            _actionInException = action;
-            return this;
-        }
-
-        public Verify SetCurrentTestActionInException(Action action)
-        {
-            _localActionInException = action;
-            return this;
-        }
 
         private bool VerifyRunner(string stepName, Action action)
         {
@@ -60,8 +45,8 @@ namespace Allure.Commons.Helpers
             {
                 result = false;
                 AllureLifecycle.Instance.MakeStepWithExMessage(assertsBefore, stepName, e);
-                _actionInException?.Invoke();
-                _localActionInException?.Invoke();
+                AllureLifecycle.CurrentTestActionInException?.Invoke();
+                AllureLifecycle.GlobalActionInException?.Invoke();
                 CurrentTestAsserts.Add(e);
                 AllureLifecycle.Instance.UpdateStep(uuid, _ => _.status = Status.failed);
             }
