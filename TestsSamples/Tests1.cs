@@ -1,6 +1,5 @@
 ﻿using System;
 using Allure.Commons;
-using Allure.Commons.Model;
 using NUnit.Framework;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
@@ -77,12 +76,6 @@ namespace TestsSamples
         [TestCase(TestName = "RunStep negative scenario #2")]
         public void RunStepNeg2()
         {
-            AllureLifecycle.Instance.UpdateStep(q =>
-            {
-                var param = new Parameter {name = "Param #1", value = "value"};
-                q.parameters.Add(param);
-            });
-
             AllureLifecycle.Instance.RunStep("Open google.com page",
                 () =>
                 {
