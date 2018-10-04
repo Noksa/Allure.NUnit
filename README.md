@@ -16,7 +16,7 @@ Everything else is optional and is not required to enable reporting.
 You can add both constants and system/CI server variables in this way:
 * Constants:<br/> ![alt text](https://github.com/Noksa/Allure.NUnit/blob/master/Allure/ScreenshotsReadme/ConstantsEnvExample.png)<br/>
 * Runtime variables in `environment.runtime` block, syntax: `Namespace.ClassName.MemberName`:<br/> ![alt text](https://github.com/Noksa/Allure.NUnit/blob/master/Allure/ScreenshotsReadme/RuntimeVariablesExample.png)<br/>
-<br/>Works with public/internal/private static fields, static properties and with constants.<br/>
+<br/>__Works with public/internal/private static fields, static properties and with constants.__<br/>
 * System or CI server variables in `environment.runtime` block, syntax `System.Environment.NameOfVariable`:<br/>
 ![alt text](https://github.com/Noksa/Allure.NUnit/blob/master/Allure/ScreenshotsReadme/SystemVariablesExample.png)
 
