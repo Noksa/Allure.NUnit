@@ -10,6 +10,7 @@ Everything else is optional and is not required to enable reporting.
 1) Steps in `[Setup]` `[TearDown]` and `[OneTimeSetup]` `[OneTimeTearDown]` will be displayed in report:
 
 ![alt text](https://github.com/Noksa/Allure.NUnit/blob/master/Allure/ScreenshotsReadme/StepsExample.png)
+
 2) Using `allureConfig.json` you can add your own categories to the report.
 
 3) Using `allureConfig.json`, you can add environment variables to the report.
