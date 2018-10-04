@@ -12,14 +12,14 @@ namespace TestsSamples
     public class Debugging : AllureReport
     {
         [SetUp]
-        public void Set()
+        public void CurrentTestSetup()
         {
             AllureLifecycle.Instance.RunStep($"This is setup step in test {TestContext.CurrentContext.Test.FullName}",
                 () => { });
         }
 
         [TearDown]
-        public void Tea()
+        public void CurrentTestTearDown()
         {
             AllureLifecycle.Instance.RunStep(
                 $"This is teardown step in test {TestContext.CurrentContext.Test.FullName}", () => { });
@@ -47,14 +47,14 @@ namespace TestsSamples
         private object fixtureArg;
 
         [OneTimeSetUp]
-        public void OTS()
+        public void OneTimeSetup()
         {
             AllureLifecycle.Instance.RunStep(
                 $"This is onetimesetup step of fixture {TestContext.CurrentContext.Test.FullName}", () => { });
         }
 
         [OneTimeTearDown]
-        public void OTTD()
+        public void OneTimeTearDown()
         {
             AllureLifecycle.Instance.RunStep(
                 $"This is onetimeteardown step of fixture {TestContext.CurrentContext.Test.FullName}", () => { });
