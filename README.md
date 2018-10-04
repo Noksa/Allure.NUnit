@@ -1,7 +1,12 @@
-# C# Allure with many new features.
+# C# Allure with many new features
 [![nuget](http://flauschig.ch/nubadge.php?id=Noksa.NUnit.Allure)](https://www.nuget.org/packages/Noksa.NUnit.Allure/)
 
-Some new features:
+## How to use
+
+Just inherit your base class or test class from `[AllureReport]`<br/>
+Everything else is optional and is not required to enable reporting.
+
+### Some new features:
 1) Steps in `[Setup]` `[TearDown]` and `[OneTimeSetup]` `[OneTimeTearDown]` will be displayed in report:
 
 ![alt text](https://snag.gy/sIhcX4.jpg)
@@ -12,7 +17,7 @@ Some new features:
 You can add both constants and system/CI server variables in this way:
 * Constants:<br/> ![alt text](https://automated-testing.info/uploads/default/original/2X/1/1f114dad16bd8d71dbf17534c0573882a41cac06.png)<br/>
 * Runtime variables in `environment.runtime` block, syntax: `Namespace.ClassName.MemberName`:<br/> ![alt text](https://automated-testing.info/uploads/default/optimized/2X/2/241b115c63437a39c63658cd7d5ab8fd1b0c9cbd_1_700x207.png)<br/>
-<br/>Works with public/internal/private static fields, static properties and with constants.
+<br/>Works with public/internal/private static fields, static properties and with constants.<br/>
 * System or CI server variables in `environment.runtime` block, syntax `System.Environment.NameOfVariable`:<br/>
 ![alt text](https://automated-testing.info/uploads/default/optimized/2X/3/3cc9515b7bd134f15214b856a4ab5b6c8c74e6ac_1_700x224.png)
 
@@ -41,10 +46,5 @@ Information about new features in Russian can be found in this topic: https://au
 
 For more information, see the TestSamples project.
 
-# How to use
-
-Just inherit your base class or test class from `[AllureReport]`<br/>
-Everything else is optional and is not required to enable reporting.
-
-# If you have questions
-Contact me at telegram `@doomjke`
+### If you have questions
+<br/>Contact me at telegram `@doomjke`
