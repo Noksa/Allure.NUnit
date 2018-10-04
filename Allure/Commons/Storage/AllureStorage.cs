@@ -12,53 +12,24 @@ namespace Allure.Commons.Storage
 {
     internal class AllureStorage
     {
-        [ThreadStatic] private static int _mainThreadId;
+        private static readonly object OneTimeSetupLocker = new object();
         [ThreadStatic] internal static LinkedList<string> TempContext;
-        [ThreadStatic] internal static FixtureResult CurrentTestTearDownFixture;
-        [ThreadStatic] internal static FixtureResult CurrentTestSetUpFixture;
 
         private readonly ThreadLocal<LinkedList<string>> _currentThreadStepContext =
             new ThreadLocal<LinkedList<string>>(true);
 
         private readonly ConcurrentDictionary<string, object> _storage = new ConcurrentDictionary<string, object>();
 
-        internal static int MainThreadId
-        {
-            get => _mainThreadId;
-            set => _mainThreadId = value;
-        }
+        [field: ThreadStatic] internal static int MainThreadId { get; set; }
 
-        internal static bool IsMainThread => Thread.CurrentThread.ManagedThreadId == _mainThreadId;
-
+        internal static bool IsMainThread => Thread.CurrentThread.ManagedThreadId == MainThreadId;
 
         internal LinkedList<string> CurrentThreadStepContext
         {
             get
             {
-                if (IsMainThread)
-                {
-                    if (_currentThreadStepContext.Value != null) return _currentThreadStepContext.Value;
-                    _currentThreadStepContext.Value = new LinkedList<string>();
-                    return _currentThreadStepContext.Value;
-                }
-
-                var sc = _currentThreadStepContext.Values.FirstOrDefault(
-                    _ => _.Any(d => d == TestContext.CurrentContext.Test.ID));
-
-                var rootStep = sc.Last.Value;
-                if (_currentThreadStepContext.Value == null || _currentThreadStepContext.Value.Count == 0)
-                {
-                    _currentThreadStepContext.Value = new LinkedList<string>();
-                    _currentThreadStepContext.Value.AddLast(rootStep);
-                }
-
-                if (_currentThreadStepContext.Value.Last.Value !=
-                    TestContext.CurrentContext.Test.ID)
-                {
-                    _currentThreadStepContext.Value.Clear();
-                    _currentThreadStepContext.Value.AddLast(rootStep);
-                }
-
+                if (_currentThreadStepContext.Value != null) return _currentThreadStepContext.Value;
+                _currentThreadStepContext.Value = new LinkedList<string>();
                 return _currentThreadStepContext.Value;
             }
 
@@ -67,7 +38,16 @@ namespace Allure.Commons.Storage
 
         public T Get<T>(string uuid)
         {
-            return (T) _storage[uuid];
+            try
+            {
+                return (T) _storage[uuid];
+            }
+            catch (KeyNotFoundException e)
+            {
+                var msg = $"{e.Message} \nTried to find the key: {uuid}";
+                var newEx = new KeyNotFoundException(msg);
+                throw newEx;
+            }
         }
 
         public T Put<T>(string uuid, T item)
@@ -83,21 +63,7 @@ namespace Allure.Commons.Storage
 
         public void ClearStepContext()
         {
-            CurrentThreadStepContext?.Clear();
-            var scs = _currentThreadStepContext?.Values.Where(_ =>
-                _.Count != 0 && _.Last.Value == TestContext.CurrentContext.Test.ID);
-            if (scs == null) return;
-            var list = scs.ToList();
-            if (!list.Any()) return;
-            foreach (var nestedList in list)
-                try
-                {
-                    nestedList.Clear();
-                }
-                catch (Exception)
-                {
-                    //nothing
-                }
+            CurrentThreadStepContext.Clear();
         }
 
         public void StartStep(string uuid)
@@ -117,67 +83,114 @@ namespace Allure.Commons.Storage
 
         public string GetCurrentStep()
         {
-            var methodType = BeforeAfterFixturesHelper.GetTypeOfCurrentTestMethod();
+            var methodInfo = BeforeAfterFixturesHelper.GetTypeOfCurrentMethodInTest();
+            var currentTestOrSuite = TestExecutionContext.CurrentContext.CurrentTest;
+            if (methodInfo.Keys.First().ToString() != "TestBody")
+                TestContext.Progress.WriteLine(
+                    $"\n\nПоток \"{Thread.CurrentThread.ManagedThreadId}\" => Тип метода \"{methodInfo.Keys.First()}\", имя метода: \"{methodInfo.Values.First()}\"\n\n");
 
-            if (methodType == BeforeAfterFixturesHelper.MethodType.Setup)
+            if (methodInfo.Keys.First() == BeforeAfterFixturesHelper.MethodType.OneTimeSetup)
             {
-                if (CurrentTestSetUpFixture == null)
+                var oneTimeSetUpFixture =
+                    currentTestOrSuite.GetCurrentOneTimeSetupFixture();
+                if (oneTimeSetUpFixture == null)
                 {
-                    CurrentTestSetUpFixture = new FixtureResult(); // dummy
-                    AllureLifecycle.Instance.StartBeforeFixture(
-                        TestExecutionContext.CurrentContext.CurrentTest.Properties
-                            .Get(AllureConstants.TestContainerUuid)
-                            .ToString(),
-                        $"{TestExecutionContext.CurrentContext.CurrentTest.Properties.Get(AllureConstants.TestUuid)}-before",
-                        CurrentTestSetUpFixture);
+                    oneTimeSetUpFixture = new FixtureResult {name = methodInfo.Values.First()};
+                    foreach (var tuple in currentTestOrSuite.GetAllTestsInFixture())
+                        AllureLifecycle.Instance.StartBeforeFixture(tuple.TestContainerUuid,
+                            $"{tuple.FixtureUuid}-onetimesetup",
+                            oneTimeSetUpFixture);
+                    oneTimeSetUpFixture.suiteUuid =
+                        currentTestOrSuite.GetPropAsString(AllureConstants.FixtureUuid);
+                    currentTestOrSuite.SetCurrentOneTimeSetupFixture(oneTimeSetUpFixture);
+                }
+            }
+            else
+            {
+                lock (OneTimeSetupLocker)
+                {
+                    var otsf = currentTestOrSuite.GetCurrentOneTimeSetupFixture();
+                    if (otsf != null)
+                    {
+                        TempContext = new LinkedList<string>(CurrentThreadStepContext.ToList());
+                        AllureLifecycle.Instance.StopFixture(otsf.suiteUuid + "-onetimesetup",
+                            q => q.status =
+                                ReportHelper.GetNUnitStatus(TestContext.CurrentContext.Result.Outcome.Status));
+                        CurrentThreadStepContext = new LinkedList<string>(TempContext);
+                        currentTestOrSuite.SetCurrentOneTimeSetupFixture(new FixtureResult {suiteUuid = "null"});
+                    }
                 }
             }
 
-            else if (methodType == BeforeAfterFixturesHelper.MethodType.TestBody)
-            {
-                if (CurrentTestSetUpFixture != null)
+            if (methodInfo.Keys.First() == BeforeAfterFixturesHelper.MethodType.Setup)
+                if (currentTestOrSuite.GetCurrentTestSetupFixture() == null)
+                {
+                    var fixture = new FixtureResult {name = methodInfo.Values.First()};
+
+                    AllureLifecycle.Instance.StartBeforeFixture(
+                        currentTestOrSuite.GetPropAsString(AllureConstants.TestContainerUuid),
+                        $"{currentTestOrSuite.GetPropAsString(AllureConstants.TestUuid)}-before",
+                        fixture);
+                    currentTestOrSuite.SetCurrentTestSetupFixture(fixture);
+                }
+
+            if (methodInfo.Keys.First() == BeforeAfterFixturesHelper.MethodType.TestBody)
+                if (currentTestOrSuite.GetCurrentTestSetupFixture() != null)
                 {
                     AllureLifecycle.Instance.StopFixture(q =>
                     {
-                        var status = ReportHelper.GetNunitStatus(TestContext.CurrentContext.Result.Outcome.Status);
+                        var status = ReportHelper.GetNUnitStatus(TestContext.CurrentContext.Result.Outcome.Status);
                         q.status = status;
                     });
-                    CurrentTestSetUpFixture = null;
-                    CurrentThreadStepContext.Clear();
+                    currentTestOrSuite.SetCurrentTestSetupFixture(new FixtureResult {suiteUuid = "null"});
+                    ClearStepContext();
                     CurrentThreadStepContext = TempContext;
                 }
-            }
 
-            else if (methodType == BeforeAfterFixturesHelper.MethodType.Teardown)
-            {
-                if (CurrentTestTearDownFixture == null)
+            if (methodInfo.Keys.First() == BeforeAfterFixturesHelper.MethodType.Teardown)
+                if (currentTestOrSuite.GetCurrentTestTearDownFixture() == null)
                 {
-                    if (CurrentTestSetUpFixture != null)
+                    if (currentTestOrSuite.GetCurrentTestSetupFixture() != null)
                     {
                         AllureLifecycle.Instance.StopFixture(q =>
                         {
-                            var status = ReportHelper.GetNunitStatus(TestContext.CurrentContext.Result.Outcome.Status);
+                            var status = ReportHelper.GetNUnitStatus(TestContext.CurrentContext.Result.Outcome.Status);
                             q.status = status;
+                            q.name = "TearDown";
                         });
-                        CurrentTestSetUpFixture = null;
-                        CurrentThreadStepContext.Clear();
+                        currentTestOrSuite.SetCurrentTestSetupFixture(new FixtureResult {suiteUuid = "null"});
+                        ClearStepContext();
                         CurrentThreadStepContext = TempContext;
                     }
 
                     TempContext = new LinkedList<string>(CurrentThreadStepContext.ToList());
 
-                    CurrentTestTearDownFixture = new FixtureResult(); // dummy
+                    var fixture = new FixtureResult {name = methodInfo.Values.First()};
                     AllureLifecycle.Instance.StartAfterFixture(
                         TestExecutionContext.CurrentContext.CurrentTest.Properties
                             .Get(AllureConstants.TestContainerUuid)
                             .ToString(),
                         $"{TestExecutionContext.CurrentContext.CurrentTest.Properties.Get(AllureConstants.TestUuid)}-after",
-                        CurrentTestTearDownFixture);
+                        fixture);
+                    currentTestOrSuite.SetCurrentTestTearDownFixture(fixture);
                 }
-            }
-        
 
-        var stepId = CurrentThreadStepContext.First?.Value;
+            if (methodInfo.Keys.First() == BeforeAfterFixturesHelper.MethodType.OneTimeTearDown)
+                if (currentTestOrSuite.GetCurrentOneTimeTearDownFixture() == null)
+                {
+                    TempContext = new LinkedList<string>(CurrentThreadStepContext);
+                    var oneTimeTearDownFixture = new FixtureResult {name = methodInfo.Values.First()};
+                    foreach (var tuple in TestExecutionContext.CurrentContext.CurrentTest.GetAllTestsInFixture())
+                        AllureLifecycle.Instance.StartAfterFixture(tuple.TestContainerUuid,
+                            $"{tuple.FixtureUuid}-onetimeteardown",
+                            oneTimeTearDownFixture);
+                    oneTimeTearDownFixture.suiteUuid = TestContext.CurrentContext.Test.Properties
+                        .Get(AllureConstants.FixtureUuid)
+                        .ToString();
+                    currentTestOrSuite.SetCurrentOneTimeTearDownFixture(oneTimeTearDownFixture);
+                }
+
+            var stepId = CurrentThreadStepContext.First?.Value;
             return stepId;
         }
 

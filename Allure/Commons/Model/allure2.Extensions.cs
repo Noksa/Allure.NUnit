@@ -112,6 +112,15 @@ namespace Allure.Commons.Model
             };
         }
 
+        public static Label Thread(string threadName)
+        {
+            return new Label
+            {
+                name = "thread",
+                value = threadName
+            };
+        }
+
         public static Label Host()
         {
             return new Label

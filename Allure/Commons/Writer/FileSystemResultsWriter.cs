@@ -18,11 +18,14 @@ namespace Allure.Commons.Writer
         internal FileSystemResultsWriter(string outputDirectory)
         {
             _outputDirectory = GetResultsDirectory(outputDirectory);
-            CleanUp();
+            CleanUp(true);
             _serializer.NullValueHandling = NullValueHandling.Ignore;
             _serializer.Formatting = Formatting.Indented;
             _serializer.Converters.Add(new StringEnumConverter());
         }
+
+        public DirectoryInfo Dir => new DirectoryInfo(_outputDirectory);
+
 
         public void Write(TestResult testResult)
         {
@@ -40,7 +43,7 @@ namespace Allure.Commons.Writer
             File.WriteAllBytes(filePath, content);
         }
 
-        public void CleanUp()
+        public void CleanUp(bool deleteHistoryAndCategories)
         {
             using (var mutex = new Mutex(false, "729dc988-0e9c-49d0-9e50-17e0df3cd82b"))
             {
@@ -48,9 +51,13 @@ namespace Allure.Commons.Writer
                 var directory = new DirectoryInfo(_outputDirectory);
                 foreach (var file in directory.GetFiles())
                 {
-                    if (file.Name.ToLower().Equals("categories.json")) continue;
+                    if (!deleteHistoryAndCategories)
+                        if (file.Name.ToLower().Equals("categories.json"))
+                            continue;
+
                     file.Delete();
                 }
+
                 mutex.ReleaseMutex();
             }
         }
