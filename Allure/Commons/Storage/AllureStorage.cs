@@ -7,6 +7,7 @@ using Allure.Commons.Helpers;
 using Allure.Commons.Model;
 using NUnit.Framework;
 using NUnit.Framework.Internal;
+using Logger = Allure.Commons.Helpers.Logger;
 
 namespace Allure.Commons.Storage
 {
@@ -85,9 +86,8 @@ namespace Allure.Commons.Storage
         {
             var methodInfo = BeforeAfterFixturesHelper.GetTypeOfCurrentMethodInTest();
             var currentTestOrSuite = TestExecutionContext.CurrentContext.CurrentTest;
-            if (methodInfo.Keys.First().ToString() != "TestBody")
-                TestContext.Progress.WriteLine(
-                    $"\n\nПоток \"{Thread.CurrentThread.ManagedThreadId}\" => Тип метода \"{methodInfo.Keys.First()}\", имя метода: \"{methodInfo.Values.First()}\"\n\n");
+            if (AllureLifecycle.Instance.Config.Allure.DebugMode && methodInfo.Keys.First().ToString() != "TestBody")
+                Logger.LogInProgress($"Thread \"{Thread.CurrentThread.ManagedThreadId}\" => Current allure step method type is \"{methodInfo.Keys.First()}\", method name: \"{methodInfo.Values.First()}\"");
 
             if (methodInfo.Keys.First() == BeforeAfterFixturesHelper.MethodType.OneTimeSetup)
             {
