@@ -11,9 +11,9 @@ namespace Allure.Commons.Helpers
             if (!AllureLifecycle.Instance.Config.Allure.DebugMode) return;
             lock (LogLocker)
             {
-                TestContext.Progress.WriteLine("\n=");
+                TestContext.Progress.WriteLine("\n===");
                 TestContext.Progress.WriteLine(content);
-                TestContext.Progress.WriteLine("\n=");
+                TestContext.Progress.WriteLine("\n===");
             }
         }
     }
