@@ -27,6 +27,12 @@ In this case, the error information will be added as a substep in a running step
 5) New `AllureLifecycle.Instance.RunStep` class for easy recording of steps.<br/> 
 Same as `AllureLifecycle.Instance.Verify`, but stops the test if an error occurred in the step.
 
+You can also use method `AllureLifecycle.Instance.RunStep` and `AllureLifecycle.Instance.Verify` class methods inside each other as many times as you like.
+
+
+Example of `AllureLifecycle.Instance.RunStep`:
+
+
 6) Two new tuning methods:
 `AllureLifecycle.Instance.SetGlobalActionInException (Action action)` and `AllureLifecycle.Instance.SetCurrentTestActionInException (Action action)`<br/>
 You can specify which actions you need to additionally perform if an error occurred in the `RunStep` method or in the checks in the `Verify` class.<br/>
