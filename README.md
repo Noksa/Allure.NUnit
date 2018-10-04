@@ -47,4 +47,4 @@ Just inherit your base class or test class from `[AllureReport]`<br/>
 Everything else is optional and is not required to enable reporting.
 
 # If you have questions
-Contact me in telegram @doomjke
+Contact me at telegram `@doomjke`
