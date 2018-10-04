@@ -45,5 +45,4 @@ Information about new features in Russian can be found in this topic: https://au
 
 For more samples, see the [TestsSamples](https://github.com/Noksa/Allure.NUnit/tree/master/TestsSamples) project.
 
-#### If you have questions
-Contact me at telegram `@doomjke`
+#### If you have questions Contact me at telegram `@doomjke`
