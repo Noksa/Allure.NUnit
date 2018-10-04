@@ -10,7 +10,6 @@ Everything else is optional and is not required to enable reporting.
 1) Steps in `[Setup]` `[TearDown]` and `[OneTimeSetup]` `[OneTimeTearDown]` will be displayed in report:
 
 ![alt text](https://snag.gy/sIhcX4.jpg)
-
 2) Using `allureConfig.json` you can add your own categories to the report.
 
 3) Using `allureConfig.json`, you can add environment variables to the report.
@@ -44,7 +43,7 @@ AllureLifecycle.Instance.SetCurrentTestActionInException(() =>
 Information about new features in Russian can be found in this topic: https://automated-testing.info/t/csharp-allure-classic-nunit-with-improvements/20715
 
 
-For more information, see the TestSamples project.
+For more samples, see the [TestsSamples](https://github.com/Noksa/Allure.NUnit/tree/master/TestsSamples) project.
 
-### If you have questions
-<br/>Contact me at telegram `@doomjke`
+#### If you have questions
+Contact me at telegram `@doomjke`
