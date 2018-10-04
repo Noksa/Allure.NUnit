@@ -31,11 +31,11 @@ Same as `AllureLifecycle.Instance.Verify`, but stops the test if an error occurr
 You can also use method `AllureLifecycle.Instance.RunStep` and `AllureLifecycle.Instance.Verify` class methods inside each other as many times as you like.
 
 
-Example of `AllureLifecycle.Instance.RunStep`, test stopped after fail:<br/>
+Example of `AllureLifecycle.Instance.RunStep`, test stopped after fail:<br/><br/>
 ![alt text](https://github.com/Noksa/Allure.NUnit/blob/master/Allure/ScreenshotsReadme/RunStepExample.PNG)
 <br/><br/>
 
-Example of `AllureLifecycle.Instance.Verify` any method, test not stopped at fail:<br/>
+Example of `AllureLifecycle.Instance.Verify` any method, test not stopped at fail:<br/><br/>
 ![alt text](https://github.com/Noksa/Allure.NUnit/blob/master/Allure/ScreenshotsReadme/VerifyStepExample.PNG)<br/>
 6) Two new tuning methods:
 `AllureLifecycle.Instance.SetGlobalActionInException (Action action)` and `AllureLifecycle.Instance.SetCurrentTestActionInException (Action action)`<br/>
