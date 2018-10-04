@@ -40,7 +40,7 @@ AllureLifecycle.Instance.SetCurrentTestActionInException(() =>
 ```
 <br/>An example of the config can be found [here](https://github.com/Noksa/Allure.NUnit/blob/master/Allure/allureConfig.json).
 <br/><br/>
-Information about new features in Russian can be found in this topic: https://automated-testing.info/t/csharp-allure-classic-nunit-with-improvements/20715
+Information about all new features in Russian can be found in this topic: https://automated-testing.info/t/csharp-allure-classic-nunit-with-improvements/20715
 
 
 For more samples, see the [TestsSamples](https://github.com/Noksa/Allure.NUnit/tree/master/TestsSamples) project.
