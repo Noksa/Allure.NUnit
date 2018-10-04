@@ -39,6 +39,7 @@ namespace Allure.Commons.Model
     [DebuggerStepThrough()]
     public partial class FixtureResult : ExecutableItem
     {
+        internal string suiteUuid { get; set; }
     }
 
     [DebuggerStepThrough()]

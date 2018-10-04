@@ -1,29 +1,34 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Xml.Linq;
 using Allure.Commons.Helpers;
+using Allure.Commons.Json;
 using Allure.Commons.Model;
 using Allure.Commons.Storage;
 using Allure.Commons.Utils;
 using Allure.Commons.Writer;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 
 namespace Allure.Commons
 {
     public sealed class AllureLifecycle
     {
-        private static readonly object Lockobj = new object();
+        private static readonly object Locker = new object();
         private static AllureLifecycle _instance;
+        internal static List<Action> GlobalActionsInException;
+        [ThreadStatic] internal static List<Action> CurrentTestActionsInException;
         internal readonly Configuration Config;
         internal readonly AllureStorage Storage;
         private IAllureResultsWriter _writer;
-        internal static Action GlobalActionInException;
-        [ThreadStatic] internal static Action CurrentTestActionInException;
-        public Verify Verify { get; }
 
         private AllureLifecycle()
         {
@@ -31,52 +36,51 @@ namespace Allure.Commons
             var dir = Path.GetDirectoryName(GetType().Assembly.Location);
             using (var r = new StreamReader(Path.Combine(dir, AllureConstants.ConfigFilename)))
             {
+                var deserializeSettings = new JsonSerializerSettings {Formatting = Formatting.Indented};
                 var json = r.ReadToEnd();
-                Config = JsonConvert.DeserializeObject<Configuration>(json);
+                Config = JsonConvert.DeserializeObject<Configuration>(json,
+                    deserializeSettings);
+                AllureEnvironment = JObject.Parse(json).GetValue("environment");
             }
 
-            _writer = GetDefaultResultsWriter(Config.Allure.Directory);
             Storage = new AllureStorage();
         }
+
+        private static string AllureVersion { get; } =
+            Assembly.GetAssembly(typeof(AllureLifecycle)).GetName().Version.ToString();
+
+        internal static JToken AllureEnvironment { get; set; }
+
+
+        public Verify Verify { get; }
 
         internal string WorkspaceDir => TestContext.CurrentContext.WorkDirectory;
 
         public string ResultsDirectory => _writer.ToString();
 
         public static bool IsMainThread => AllureStorage.IsMainThread;
-        internal static int MainThreadId => AllureStorage.MainThreadId;
 
         public static AllureLifecycle Instance
         {
             get
             {
                 if (_instance != null) return _instance;
-                lock (Lockobj)
+                lock (Locker)
                 {
-                    _instance = _instance ?? new AllureLifecycle();
+                    _instance = new AllureLifecycle();
+                    LocalHistoryTrendMaker.MakeLocalHistoryTrend();
+                    _instance.SetDefaultResultsWriter(_instance.Config.Allure.Directory);
+                    var categories = _instance.Config.Categories;
+                    MakeCategoriesFile(categories, _instance._writer.Dir);
                 }
 
                 return _instance;
             }
         }
 
-        [Obsolete("In the following releases, this method will be removed. Use json config file instead.")]
-        public bool AllowEmptySuites
+        public static long ToUnixTimestamp(DateTimeOffset value = default)
         {
-            get => Config.Allure.AllowEmptySuites;
-            set => Config.Allure.AllowEmptySuites = value;
-        }
-
-        [Obsolete("In the following releases, this method will be removed. Use json config file instead.")]
-        public AllureLifecycle ChangeResultsDirectory(string dirPath)
-        {
-            _writer = GetDefaultResultsWriter(dirPath);
-            return this;
-        }
-
-        public static long ToUnixTimestamp(DateTimeOffset value = default(DateTimeOffset))
-        {
-            if (value == default(DateTimeOffset)) value = DateTimeOffset.Now;
+            if (value == default) value = DateTimeOffset.Now;
 #if NET45 || NET451 || NET452
             return (long) value.UtcDateTime.Subtract(new DateTime(1970, 1, 1)).TotalMilliseconds;
 #else
@@ -106,9 +110,9 @@ namespace Allure.Commons
             return this;
         }
 
-        public AllureLifecycle StopTestContainer(string uuid)
+        public AllureLifecycle StopTestContainer(string uuid, bool updateStopTime)
         {
-            UpdateTestContainer(uuid, c => c.stop = ToUnixTimestamp());
+            if (updateStopTime) UpdateTestContainer(uuid, c => c.stop = ToUnixTimestamp());
             return this;
         }
 
@@ -148,6 +152,7 @@ namespace Allure.Commons
             return this;
         }
 
+
         public AllureLifecycle StopFixture(Action<FixtureResult> beforeStop)
         {
             UpdateFixture(beforeStop);
@@ -156,6 +161,16 @@ namespace Allure.Commons
 
         public AllureLifecycle StopFixture(string uuid)
         {
+            var fixture = Storage.Remove<FixtureResult>(uuid);
+            Storage.ClearStepContext();
+            fixture.stage = Stage.finished;
+            fixture.stop = ToUnixTimestamp();
+            return this;
+        }
+
+        public AllureLifecycle StopFixture(string uuid, Action<FixtureResult> beforeStop)
+        {
+            UpdateFixture(uuid, beforeStop);
             var fixture = Storage.Remove<FixtureResult>(uuid);
             Storage.ClearStepContext();
             fixture.stage = Stage.finished;
@@ -178,7 +193,6 @@ namespace Allure.Commons
             testResult.stage = Stage.running;
             testResult.start = ToUnixTimestamp();
             Storage.Put(testResult.uuid, testResult);
-            Storage.ClearStepContext();
             Storage.StartStep(testResult.uuid);
             return this;
         }
@@ -200,11 +214,11 @@ namespace Allure.Commons
             return StopTestCase(Storage.GetRootStep());
         }
 
-        public AllureLifecycle StopTestCase(string uuid)
+        public AllureLifecycle StopTestCase(string uuid, bool updateStopTime = true)
         {
             var testResult = Storage.Get<TestResult>(uuid);
             testResult.stage = Stage.finished;
-            testResult.stop = ToUnixTimestamp();
+            if (updateStopTime) testResult.stop = ToUnixTimestamp();
             Storage.ClearStepContext();
             return this;
         }
@@ -219,69 +233,62 @@ namespace Allure.Commons
 
         #region Step
 
+        /// <summary>
+        ///     Use this function carefully.
+        ///     <para></para>
+        ///     If you use static fields or just fields with already assigned values and in the future they will not change, and
+        ///     tests are run in parallel, the behavior may be unpredictable.
+        /// </summary>
+        /// <param name="action">Action in exception</param>
+        /// <returns></returns>
         public AllureLifecycle SetGlobalActionInException(Action action)
         {
-            GlobalActionInException = action;
+            if (GlobalActionsInException == null) GlobalActionsInException = new List<Action>();
+            GlobalActionsInException.Add(action);
             return this;
         }
 
+        /// <summary>
+        ///     The function specifies additional behavior of the system with exceptions in methods Instance.RunStep and
+        ///     Verify.That
+        /// </summary>
+        /// <param name="action">Action in Exception</param>
+        /// <returns></returns>
         public AllureLifecycle SetCurrentTestActionInException(Action action)
         {
-            CurrentTestActionInException = action;
+            if (CurrentTestActionsInException == null) CurrentTestActionsInException = new List<Action>();
+            CurrentTestActionsInException.Add(action);
             return this;
         }
 
-        public void RunStep(string stepName, Action stepBody)
+        public void RunStep(Action stepBody, params object[] stepParams)
         {
-            var assertsBefore = TestContext.CurrentContext.Result.Assertions.Count();
-            var assertListCountBefore = Verify.CurrentTestAsserts.Count;
-            Exception throwedEx = null;
-            var uuid = $"{Guid.NewGuid():N}";
-            var stepResult = new StepResult
-            {
-                name = stepName,
-                start = ToUnixTimestamp(DateTimeOffset.Now)
-            };
-            Instance.StartStep(uuid, stepResult);
-            try
-            {
-                stepBody.Invoke();
-                var assertListCountAfter = Verify.CurrentTestAsserts.Count;
-                if (assertListCountAfter != assertListCountBefore)
-                    Instance.UpdateStep(uuid, result => result.status = Status.failed);
-                else
-                    Instance.UpdateStep(uuid, result => result.status = Status.passed);
-            }
-            catch (Exception e)
-            {
-                throwedEx = e;
-                if (throwedEx.Data.Contains("Rethrow"))
-                {
-                    Instance.UpdateStep(uuid, _ => _.status = Status.failed);
-                }
-
-                else
-                {
-                    throwedEx.Data.Add("Rethrow", true);
-                    Instance.UpdateStep(uuid, _ => _.status = Status.failed);
-                    Instance.MakeStepWithExMessage(assertsBefore, stepName, e);
-                    CurrentTestActionInException?.Invoke();
-                    GlobalActionInException?.Invoke();
-                }
-            }
-            finally
-            {
-                Instance.StopStep(uuid);
-            }
-
-            if (throwedEx != null) throw throwedEx;
+            var stepName = GetCallerMethodName();
+            StepRunner<object>(stepName, stepBody, true, Status.failed, stepParams);
         }
 
-
-        public TResult RunStep<TResult>(string stepName, Func<TResult> stepBody)
+        public TResult RunStep<TResult>(Func<TResult> stepBody, params object[] stepParams)
         {
+            var stepName = GetCallerMethodName();
+            return StepRunner<TResult>(stepName, stepBody, true, Status.failed, stepParams);
+        }
+
+        public void RunStep(string stepName, Action stepBody, params object[] stepParams)
+        {
+            StepRunner<object>(stepName, stepBody, true, Status.failed, stepParams);
+        }
+
+        public TResult RunStep<TResult>(string stepName, Func<TResult> stepBody, params object[] stepParams)
+        {
+            return StepRunner<TResult>(stepName, stepBody, true, Status.failed, stepParams);
+        }
+
+        internal static TResult StepRunner<TResult>(string stepName, Delegate del, bool throwEx,
+            Status stepStatusIfFailed,
+            params object[] stepParams)
+        {
+            var stepStatus = Status.passed;
             var assertsBefore = TestContext.CurrentContext.Result.Assertions.Count();
-            var assertListCountBefore = Verify.CurrentTestAsserts.Count;
             Exception throwedEx = null;
             var resultFunc = default(TResult);
             var uuid = $"{Guid.NewGuid():N}";
@@ -291,38 +298,72 @@ namespace Allure.Commons
                 start = ToUnixTimestamp(DateTimeOffset.Now)
             };
             Instance.StartStep(uuid, stepResult);
+
+            if (Instance.Config.Allure.EnableParameters)
+                for (var i = 0; i < stepParams.Length; i++)
+                {
+                    var strArg = stepParams[i].ToString();
+                    var param = new Parameter
+                    {
+                        name = $"Parameter #{i + 1}, {stepParams[i].GetType().Name}",
+                        value = strArg
+                    };
+                    Instance.UpdateStep(uuid, q => q.parameters.Add(param));
+                }
+
             try
             {
-                resultFunc = stepBody();
-                var assertListCountAfter = Verify.CurrentTestAsserts.Count;
-                if (assertListCountAfter != assertListCountBefore)
-                    Instance.UpdateStep(uuid, result => result.status = Status.failed);
-                else
-                    Instance.UpdateStep(uuid, result => result.status = Status.passed);
+                switch (del)
+                {
+                    case Action action when resultFunc is bool:
+                        action.Invoke();
+                        resultFunc = (TResult) (object) true;
+                        break;
+                    case Func<TResult> func:
+                        resultFunc = func.Invoke();
+                        break;
+                    default:
+                        resultFunc = (TResult) del.DynamicInvoke();
+                        break;
+                }
+
+                if (assertsBefore != TestContext.CurrentContext.Result.Assertions.Count())
+                    stepStatus = stepStatusIfFailed;
             }
             catch (Exception e)
             {
-                throwedEx = e;
-                if (throwedEx.Data.Contains("Rethrow"))
-                {
-                    Instance.UpdateStep(uuid, _ => _.status = Status.failed);
-                }
-
+                if (e is TargetInvocationException)
+                    throwedEx = GetInnerExceptions(e)
+                        .First(q => q.GetType() != typeof(TargetInvocationException));
                 else
+                    throwedEx = e;
+
+                if (throwedEx is InconclusiveException)
+                    stepStatus = Status.skipped;
+
+                else if (throwedEx is SuccessException)
+                    throwEx = false; // no throw ex, because assert.pass
+                else
+                    stepStatus = stepStatusIfFailed;
+
+                var list =
+                    TestContext.CurrentContext.Test.Properties.Get(AllureConstants.TestAsserts) as List<Exception>;
+                list?.Add(throwedEx);
+                if (!throwedEx.Data.Contains("Rethrow"))
                 {
                     throwedEx.Data.Add("Rethrow", true);
-                    Instance.UpdateStep(uuid, _ => _.status = Status.failed);
-                    Instance.MakeStepWithExMessage(assertsBefore, stepName, e);
-                    CurrentTestActionInException?.Invoke();
-                    GlobalActionInException?.Invoke();
+                    Instance.MakeStepWithExMessage(assertsBefore, stepName, throwedEx, stepStatusIfFailed);
+                    CurrentTestActionsInException?.ForEach(action => action.Invoke());
+                    GlobalActionsInException?.ForEach(action => action.Invoke());
                 }
             }
             finally
             {
+                Instance.UpdateStep(step => step.status = stepStatus);
                 Instance.StopStep(uuid);
             }
 
-            if (throwedEx != null) throw throwedEx;
+            if (throwEx && throwedEx != null) throw throwedEx;
             return resultFunc;
         }
 
@@ -332,15 +373,17 @@ namespace Allure.Commons
             return this;
         }
 
-        public AllureLifecycle MakeStepWithExMessage(int assertsBeforeCount, string stepName, Exception ex)
+        public AllureLifecycle MakeStepWithExMessage(int assertsBeforeCount, string stepName, Exception ex,
+            Status stepStatus)
         {
             var exMsg = ex.Message;
-            if (assertsBeforeCount != TestContext.CurrentContext.Result.Assertions.Count())
+            if (assertsBeforeCount != TestContext.CurrentContext.Result.Assertions.Count() && ex.InnerException == null)
             {
-                exMsg = MakeExMessageWithoutStepName(stepName, TestContext.CurrentContext.Result.Assertions.Last().Message
+                exMsg = MakeExMessageWithoutStepName(stepName, TestContext.CurrentContext.Result.Assertions.Last()
+                    .Message
                     .Trim());
                 if (string.IsNullOrEmpty(exMsg)) return this;
-                StartStepAndFailIt(exMsg);
+                StartStepAndStopIt(ex, exMsg, stepStatus);
             }
             else if (string.IsNullOrEmpty(exMsg))
             {
@@ -349,14 +392,20 @@ namespace Allure.Commons
             else if (ex.InnerException == null)
             {
                 exMsg = MakeExMessageWithoutStepName(stepName, exMsg);
-                StartStepAndFailIt(exMsg);
+                StartStepAndStopIt(ex, exMsg, Status.failed);
             }
             else
             {
+                if (ex.GetType() != typeof(TargetInvocationException))
+                {
+                    var exStepMsg = MakeExMessageWithoutStepName(stepName, exMsg);
+                    StartStepAndStopIt(ex, exStepMsg, Status.failed);
+                }
+
                 GetInnerExceptions(ex).ToList().ForEach(inEx =>
                 {
                     var msg = MakeExMessageWithoutStepName(stepName, inEx.Message);
-                    StartStepAndFailIt(msg);
+                    StartStepAndStopIt(inEx, msg, Status.failed);
                 });
             }
 
@@ -373,11 +422,20 @@ namespace Allure.Commons
             return exMsg;
         }
 
-        private AllureLifecycle StartStepAndFailIt(string stepName)
+        internal AllureLifecycle StartStepAndStopIt(Exception ex, string stepName, Status stepStatus)
         {
+            var exName = "";
+            if (ex == null)
+            {
+            }
+            else
+            {
+                exName = ex is ThreadAbortException ? "" : $"{ex.GetType().Name}: ";
+            }
+
             var uuid = $"{Guid.NewGuid():N}";
-            Instance.StartStep(stepName, uuid);
-            Instance.UpdateStep(uuid, _ => _.status = Status.failed);
+            Instance.StartStep($"{exName}{stepName}", uuid);
+            Instance.UpdateStep(uuid, _ => _.status = stepStatus);
             Instance.StopStep(uuid);
             return this;
         }
@@ -439,7 +497,8 @@ namespace Allure.Commons
             Json,
             ImagePng,
             Txt,
-            Video
+            Video,
+            Html
         }
 
         public AllureLifecycle AddAttachment(string name, AttachFormat type, byte[] bytesArray,
@@ -455,6 +514,8 @@ namespace Allure.Commons
                 case AttachFormat.ImagePng:
                     return AddAttachment(name, "image/png", bytesArray, ".png");
                 case AttachFormat.Txt:
+                    return AddAttachment(name, type, asString);
+                case AttachFormat.Html:
                     return AddAttachment(name, type, asString);
                 case AttachFormat.Video:
                     throw new ArgumentException(
@@ -485,6 +546,8 @@ namespace Allure.Commons
                     return AddAttachment(name, AttachFormat.Txt, inside);
                 case AttachFormat.Video:
                     return AddAttachment(name, "video/mp4", file.FullName);
+                case AttachFormat.Html:
+                    return AddAttachment(name, AttachFormat.Html, inside);
                 default:
                     throw new ArgumentOutOfRangeException(nameof(type), type, null);
             }
@@ -510,6 +573,10 @@ namespace Allure.Commons
                 case AttachFormat.Txt:
                     if (string.IsNullOrEmpty(fileExtension)) fileExtension = ".txt";
                     return AddAttachment(name, "text/txt", Encoding.UTF8.GetBytes(content), fileExtension);
+                case AttachFormat.Html:
+                    content = WebUtility.HtmlEncode(content);
+                    if (string.IsNullOrEmpty(fileExtension)) fileExtension = ".html";
+                    return AddAttachment(name, "text/html", Encoding.UTF8.GetBytes(content), fileExtension);
                 default:
                     throw new ArgumentException($"You cant use \"{type}\" argument at this method.");
             }
@@ -552,7 +619,7 @@ namespace Allure.Commons
 
         public void CleanupResultDirectory()
         {
-            _writer.CleanUp();
+            _writer.CleanUp(false);
         }
 
         public AllureLifecycle AddScreenDiff(string testCaseUuid, string expectedPng, string actualPng, string diffPng)
@@ -570,6 +637,32 @@ namespace Allure.Commons
 
         #region Privates
 
+        private static void MakeCategoriesFile(List<Configuration.Category> categoriesList, FileSystemInfo dir)
+        {
+            if (categoriesList == null || categoriesList.Count == 0 ||
+                string.IsNullOrEmpty(categoriesList.First().name)) return;
+            var fileName = AllureConstants.CategoriesFileName;
+            var jsonContent = JsonConvert.SerializeObject(categoriesList,
+                new JsonSerializerSettings
+                    {NullValueHandling = NullValueHandling.Ignore, Formatting = Formatting.Indented});
+            var dirPath = dir.FullName;
+            var filePath = Path.Combine(dirPath, fileName);
+            var file = new FileInfo(filePath);
+            if (file.Exists) file.Delete();
+
+            using (var sw = new StreamWriter(filePath))
+            {
+                sw.WriteLine(jsonContent);
+            }
+        }
+
+        private static string GetCallerMethodName()
+        {
+            var frame = new StackFrame(2);
+            var method = frame.GetMethod();
+            return method.Name;
+        }
+
         private static IEnumerable<Exception> GetInnerExceptions(Exception ex)
         {
             if (ex == null) throw new ArgumentNullException(nameof(ex));
@@ -585,6 +678,7 @@ namespace Allure.Commons
 
         private void StartFixture(string uuid, FixtureResult fixtureResult)
         {
+            fixtureResult.statusDetails = new StatusDetails();
             Storage.Put(uuid, fixtureResult);
             fixtureResult.stage = Stage.running;
             fixtureResult.start = ToUnixTimestamp();
@@ -592,12 +686,18 @@ namespace Allure.Commons
             Storage.StartStep(uuid);
         }
 
-        internal IAllureResultsWriter GetDefaultResultsWriter(string outDir)
+        internal string GetDirectoryWithResults(string outDir)
         {
             if (outDir == AllureConstants.DefaultResultsFolder)
                 outDir = Path.Combine(WorkspaceDir, AllureConstants.DefaultResultsFolder);
             if (outDir == "temp") outDir = Path.Combine(Path.GetTempPath(), AllureConstants.DefaultResultsFolder);
-            return new FileSystemResultsWriter(outDir);
+            return outDir;
+        }
+
+        internal void SetDefaultResultsWriter(string outDir)
+        {
+            var dir = GetDirectoryWithResults(outDir);
+            _writer = new FileSystemResultsWriter(dir);
         }
 
         #endregion

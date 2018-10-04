@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
@@ -15,6 +16,8 @@ namespace Allure.Commons.Helpers
 {
     internal static class ReportHelper
     {
+        internal static readonly object Locker = new object();
+
         internal static List<ITest> GetAllTestsInSuite(ITest suite)
         {
             var list = new List<ITest>();
@@ -37,7 +40,8 @@ namespace Allure.Commons.Helpers
             return list;
         }
 
-        internal static void AddToTestCaseParametersInfo(ITest test, int[] hideParams, int[] removeParams)
+        internal static void AddToTestCaseParametersInfo(ITest test, string testUuid, int[] hideParams,
+            int[] removeParams)
         {
             if (AllureLifecycle.Instance.Config.Allure.EnableParameters)
             {
@@ -52,35 +56,70 @@ namespace Allure.Commons.Helpers
                         value = hideParams.Contains(paramNum) ? "Parameter is hidden" : strArg
                     };
                     if (removeParams.Contains(paramNum)) continue;
-                    AllureLifecycle.Instance.UpdateTestCase(test.Properties.Get(AllureConstants.TestUuid).ToString(),
+                    AllureLifecycle.Instance.UpdateTestCase(testUuid,
                         x => x.parameters.Add(param));
                 }
             }
         }
 
-        internal static void AddInfoInTestCase(ITest test)
+        internal static string GenerateFixtureNameWithParameters(ITest suite, string suiteNameFromAttr)
+        {
+            if (!AllureLifecycle.Instance.Config.Allure.EnableParameters) return suiteNameFromAttr;
+            var listOfArgs = suite.Arguments.ToList();
+            if (listOfArgs.Count == 0) return suiteNameFromAttr;
+            var suiteFullName = $"{suiteNameFromAttr} (";
+            foreach (var arg in listOfArgs)
+
+            {
+                string argValue;
+                switch (arg)
+                {
+                    case string _:
+                        argValue = $"\"{arg}\"";
+                        break;
+                    case decimal _:
+                        argValue = ((decimal) arg).ToString(CultureInfo.InvariantCulture);
+                        break;
+                    case float _:
+                        argValue = ((float) arg).ToString(CultureInfo.InvariantCulture);
+                        break;
+                    case double _:
+                        argValue = ((double) arg).ToString(CultureInfo.InvariantCulture);
+                        break;
+                    default:
+                        argValue = $"{arg}";
+                        break;
+                }
+
+                argValue = $"{argValue}, ";
+                suiteFullName = $"{suiteFullName}{argValue}";
+            }
+
+            suiteFullName = suiteFullName.Substring(0, suiteFullName.Length - 2);
+            suiteFullName = $"{suiteFullName})";
+            return suiteFullName;
+        }
+
+
+        internal static void AddInfoInTestCase(ITest test, string testUuid, ITest suite)
         {
             var testMethod = test.Method.MethodInfo;
             if (testMethod.DeclaringType != null)
             {
                 var testClassAttrs = testMethod.DeclaringType.GetCustomAttributes().ToList();
                 if (!testClassAttrs.Any(e => e is AllureSuiteAttribute))
-                    AllureLifecycle.Instance.UpdateTestCase(x =>
-                    {
-                        x.labels.Add(testMethod.DeclaringType != null
-                            ? Label.Suite(testMethod.DeclaringType.FullName)
-                            : Label.Suite(testMethod.Name));
-                    });
+                    AllureLifecycle.Instance.UpdateTestCase(testUuid,
+                        x => { x.labels.Add(Label.Suite(suite.FullName)); });
 
-                AddInfoToTestCaseFromAttributes(test, testClassAttrs, false);
+                AddInfoToTestCaseFromAttributes(test, testUuid, suite, testClassAttrs, false);
             }
 
             var attrs = testMethod.GetCustomAttributes().ToList();
 
             var defects = attrs.Where(_ => _ is AllureIssueAttribute).Cast<AllureIssueAttribute>().Count();
-            AddInfoToTestCaseFromAttributes(test, attrs, true);
+            AddInfoToTestCaseFromAttributes(test, testUuid, suite, attrs, true);
             if (defects != 0)
-                AllureLifecycle.Instance.UpdateTestCase(_ =>
+                AllureLifecycle.Instance.UpdateTestCase(testUuid, _ =>
                 {
                     var subSuites = _.labels.Where(lbl => lbl.name.ToLower().Equals("subsuite")).ToList();
                     subSuites.ForEach(lbl => _.labels.Remove(lbl));
@@ -88,7 +127,8 @@ namespace Allure.Commons.Helpers
                 });
         }
 
-        internal static void AddInfoToTestCaseFromAttributes(ITest test, IEnumerable<Attribute> attrs,
+        internal static void AddInfoToTestCaseFromAttributes(ITest test, string testUuid, ITest suite,
+            IEnumerable<Attribute> attrs,
             bool testMethodAttrs)
         {
             var removeParamsNumber = new[] {-999};
@@ -98,46 +138,70 @@ namespace Allure.Commons.Helpers
                 {
                     case AllureFeatureAttribute featureAttr:
                         foreach (var feature in featureAttr.Features)
-                            AllureLifecycle.Instance.UpdateTestCase(x => x.labels.Add(Label.Feature(feature)));
+                            AllureLifecycle.Instance.UpdateTestCase(
+                                testUuid,
+                                x => x.labels.Add(Label.Feature(feature)));
                         break;
                     case AllureIssueAttribute issueAttr:
-                        AllureLifecycle.Instance.UpdateTestCase(x => x.links.Add(issueAttr.IssueLink));
+                        AllureLifecycle.Instance.UpdateTestCase(
+                            testUuid,
+                            x => x.links.Add(issueAttr.IssueLink));
                         break;
                     case AllureSeverityAttribute severityAttr:
                         AllureLifecycle.Instance.UpdateTestCase(
+                            testUuid,
                             x => x.labels.Add(Label.Severity(severityAttr.Severity)));
                         break;
                     case AllureStoryAttribute storyAttr:
                         foreach (var story in storyAttr.Stories)
-                            AllureLifecycle.Instance.UpdateTestCase(x => x.labels.Add(Label.Story(story)));
+                            AllureLifecycle.Instance.UpdateTestCase(
+                                testUuid,
+                                x => x.labels.Add(Label.Story(story)));
                         break;
                     case AllureTagAttribute tagAttr:
                         foreach (var tag in tagAttr.Tags)
-                            AllureLifecycle.Instance.UpdateTestCase(x => x.labels.Add(Label.Tag(tag)));
+                            AllureLifecycle.Instance.UpdateTestCase(
+                                testUuid,
+                                x => x.labels.Add(Label.Tag(tag)));
                         break;
                     case AllureTestAttribute testAttr:
                         if (!string.IsNullOrEmpty(testAttr.Description))
-                            AllureLifecycle.Instance.UpdateTestCase(x => x.description = testAttr.Description);
+                            AllureLifecycle.Instance.UpdateTestCase(
+                                testUuid,
+                                x => x.description = testAttr.Description);
                         break;
                     case AllureTmsAttribute tmsAttr:
-                        AllureLifecycle.Instance.UpdateTestCase(x => x.links.Add(tmsAttr.TmsLink));
+                        AllureLifecycle.Instance.UpdateTestCase(
+                            testUuid,
+                            x => x.links.Add(tmsAttr.TmsLink));
                         break;
                     case AllureSuiteAttribute suiteAttr:
-                        AllureLifecycle.Instance.UpdateTestCase(x => x.labels.Add(Label.Suite(suiteAttr.Suite)));
+                        AllureLifecycle.Instance.UpdateTestCase(
+                            testUuid, x =>
+                            {
+                                var suiteName = GenerateFixtureNameWithParameters(suite, suiteAttr.Suite);
+                                x.labels.Add(Label.Suite(suiteName));
+                            });
                         break;
                     case AllureSubSuiteAttribute subSuiteAttr:
                         AllureLifecycle.Instance.UpdateTestCase(
+                            testUuid,
                             x => x.labels.Add(Label.SubSuite(subSuiteAttr.SubSuite)));
                         break;
                     case AllureOwnerAttribute ownerAttr:
-                        AllureLifecycle.Instance.UpdateTestCase(x => x.labels.Add(Label.Owner(ownerAttr.Owner)));
+                        AllureLifecycle.Instance.UpdateTestCase(
+                            testUuid,
+                            x => x.labels.Add(Label.Owner(ownerAttr.Owner)));
                         break;
                     case AllureEpicAttribute epicAttr:
-                        AllureLifecycle.Instance.UpdateTestCase(x => x.labels.Add(Label.Epic(epicAttr.Epic)));
+                        AllureLifecycle.Instance.UpdateTestCase(
+                            testUuid,
+                            x => x.labels.Add(Label.Epic(epicAttr.Epic)));
                         break;
                     case AllureParentSuiteAttribute parentSuiteAttr:
-                        AllureLifecycle.Instance.UpdateTestCase(x =>
-                            x.labels.Add(Label.ParentSuite(parentSuiteAttr.ParentSuite)));
+                        AllureLifecycle.Instance.UpdateTestCase(
+                            testUuid, x =>
+                                x.labels.Add(Label.ParentSuite(parentSuiteAttr.ParentSuite)));
                         break;
                     case AllureRemoveParamsAttribute removeParamsAttr:
                         removeParamsNumber = removeParamsAttr.ParamNumbers;
@@ -145,13 +209,23 @@ namespace Allure.Commons.Helpers
                     case AllureHideParamsAttribute hideParamsAttr:
                         hideParamsNumber = hideParamsAttr.ParamNumbers;
                         break;
+                    case AllureLinkAttribute linkAttr:
+                        AllureLifecycle.Instance.UpdateTestCase(
+                            testUuid,
+                            x => x.links.Add(linkAttr.Link));
+                        break;
+                    case AllureFlakyAttribute flakyAttr:
+                        AllureLifecycle.Instance.UpdateTestCase(
+                            testUuid,
+                            x => x.statusDetails.flaky = flakyAttr.Flaky);
+                        break;
                 }
 
-            if (testMethodAttrs) AddToTestCaseParametersInfo(test, hideParamsNumber, removeParamsNumber);
+            if (testMethodAttrs) AddToTestCaseParametersInfo(test, testUuid, hideParamsNumber, removeParamsNumber);
         }
 
 
-        internal static Status GetNunitStatus(TestStatus status)
+        internal static Status GetNUnitStatus(TestStatus status)
         {
             switch (status)
             {
@@ -170,21 +244,18 @@ namespace Allure.Commons.Helpers
             }
         }
 
-
-        internal static void StartAllureLogging(ITest test, TestFixture fixture)
+        internal static void StartAllureLogging(ITest test, string testUuid, string testContainerUuid,
+            TestFixture fixture)
         {
             var ourFixture = new TestResultContainer
             {
-                uuid = test.Properties.Get(AllureConstants.TestContainerUuid).ToString(),
+                uuid = testContainerUuid,
                 name = test.ClassName
             };
             AllureLifecycle.Instance.StartTestContainer(ourFixture);
-
-            var realUuid = test.Properties.Get(AllureConstants.TestUuid).ToString();
-            AllureStorage.MainThreadId = Thread.CurrentThread.ManagedThreadId;
             var testResult = new TestResult
             {
-                uuid = realUuid,
+                uuid = testUuid,
                 name = test.Name,
                 fullName = test.FullName,
                 labels = new List<Label>
@@ -195,36 +266,39 @@ namespace Allure.Commons.Helpers
                     Label.TestMethod(test.MethodName),
                     Label.Package(test.ClassName)
                 },
-                historyId = test.Id
+                historyId = test.FullName,
+                statusDetails = new StatusDetails()
             };
             AllureLifecycle.Instance.StartTestCase(testResult);
+            AddInfoInTestCase(test, testUuid, fixture);
         }
 
-        internal static void StopAllureLogging(ITest test)
+        internal static void StopAllureLogging(TestContext.ResultAdapter testResult, string testUuid,
+            string testContainerUuid, ITest suite, bool updateStopTime, string ignoreReason)
         {
-            var assertsCount = Verify.CurrentTestAsserts.Count;
-            AddInfoInTestCase(test);
-            AllureLifecycle.Instance.UpdateTestCase(x =>
+            var result = testResult;
+            var testMsg = result.Message;
+            var testStackTrace = result.StackTrace;
+            Logger.LogInProgress(
+                $"Entering stop allure logging for \"{testUuid}\"");
+
+            if (!string.IsNullOrEmpty(ignoreReason)) testMsg = ignoreReason;
+            AllureLifecycle.Instance.UpdateTestCase(testUuid, x =>
             {
-                x.statusDetails = new StatusDetails
-                {
-                    message = MakeGoodErrorMsg(TestContext.CurrentContext.Result.Message),
-                    trace = TestContext.CurrentContext.Result.StackTrace
-                };
+                x.statusDetails.message = MakeGoodErrorMsg(testMsg);
+                x.statusDetails.trace = testStackTrace;
+                x.status = GetNUnitStatus(result.Outcome.Status);
             });
-            AllureLifecycle.Instance.StopTestCase(x =>
-            {
-                x.status = assertsCount != 0 ? Status.failed : GetNunitStatus(TestContext.CurrentContext.Result.Outcome.Status);
-            });
-            AllureLifecycle.Instance.WriteTestCase(test.Properties.Get(AllureConstants.TestUuid).ToString());
-            AllureLifecycle.Instance.UpdateTestContainer(test.Properties.Get(AllureConstants.TestContainerUuid).ToString(),
-                q =>
-                {
-                    q.children.Add(test.Properties.Get(AllureConstants.TestUuid).ToString());
-                    
-                });
-            AllureLifecycle.Instance.StopTestContainer(test.Properties.Get(AllureConstants.TestContainerUuid).ToString());
-            AllureLifecycle.Instance.WriteTestContainer(test.Properties.Get(AllureConstants.TestContainerUuid).ToString());
+            AllureLifecycle.Instance.StopTestCase(testUuid,
+                updateStopTime);
+            AllureLifecycle.Instance.WriteTestCase(testUuid);
+            AllureLifecycle.Instance.UpdateTestContainer(
+                testContainerUuid,
+                q => q.children.Add(testUuid));
+            AllureLifecycle.Instance.StopTestContainer(
+                testContainerUuid, updateStopTime);
+            AllureLifecycle.Instance.WriteTestContainer(testContainerUuid);
+            Logger.LogInProgress($"Stopped allure logging for test {testUuid}, {testContainerUuid}, {ignoreReason}");
         }
 
         internal static string MakeGoodErrorMsg(string errorMsg)
@@ -235,5 +309,83 @@ namespace Allure.Commons.Helpers
             var goodMsg = errorMsg.Substring(0, index) + " \r\n" + errorMsg.Substring(index);
             return goodMsg;
         }
+
+        internal static void AddIgnoredTestsToReport(ITest suite)
+        {
+            var ignoredTests = new Dictionary<ITest, string>();
+            AllureStorage.MainThreadId = Thread.CurrentThread.ManagedThreadId;
+
+            bool IsIgnored(ITest oTest)
+            {
+                return oTest.RunState == RunState.Ignored || oTest.RunState == RunState.Skipped;
+            }
+
+            foreach (var testMethod in suite.Tests)
+            {
+                if (!testMethod.HasChildren && IsIgnored(testMethod))
+                    ignoredTests.Add(testMethod, testMethod.Properties.Get(PropertyNames.SkipReason).ToString());
+
+                if (testMethod.HasChildren && IsIgnored(testMethod))
+                    testMethod.Tests.ToList().ForEach(_ =>
+                        ignoredTests.Add(_, testMethod.Properties.Get(PropertyNames.SkipReason).ToString()));
+                if (testMethod.HasChildren && !IsIgnored(testMethod))
+                    foreach (var localTest in testMethod.Tests)
+                        if (IsIgnored(localTest))
+                            ignoredTests.Add(localTest, localTest.Properties.Get(PropertyNames.SkipReason).ToString());
+            }
+
+            suite.SetProp(AllureConstants.IgnoredTests, ignoredTests);
+            FailIgnoredTests(ignoredTests, suite);
+        }
+
+        #region Privates
+
+        private static void FailIgnoredTests(Dictionary<ITest, string> dict, ITest suite)
+        {
+            lock (Locker)
+            {
+                foreach (var pair in dict)
+                {
+                    pair.Key.Properties.Set(AllureConstants.TestIgnoreReason,
+                        $"Test was ignored by reason: {pair.Value}");
+                    var testResult = new TestContext.ResultAdapter(new TestCaseResult(new TestMethod(pair.Key.Method)));
+                    AddInfoToIgnoredTest(ref testResult);
+                    pair.Key.Properties.Set(AllureConstants.TestResult, testResult);
+                    AllureLifecycle.Instance.Storage.ClearStepContext();
+                    AllureLifecycle.Instance.Storage.CurrentThreadStepContext.AddLast(pair.Key.Properties
+                        .Get(AllureConstants.TestUuid).ToString());
+                    AllureLifecycle.Instance.StartStepAndStopIt(null, $"Test was ignored by reason: {pair.Value}",
+                        Status.skipped);
+                    AllureLifecycle.Instance.UpdateTestContainer(
+                        pair.Key.Properties.Get(AllureConstants.TestContainerUuid).ToString(),
+                        x => x.start = AllureLifecycle.ToUnixTimestamp());
+                    AllureLifecycle.Instance.UpdateTestCase(pair.Key.Properties
+                            .Get(AllureConstants.TestUuid).ToString(),
+                        x =>
+                        {
+                            x.start = AllureLifecycle.ToUnixTimestamp();
+                            x.labels.RemoveAll(q => q.name == "thread");
+                            x.labels.Add(Label.Thread());
+                            var subSuites = x.labels.Where(lbl => lbl.name.ToLower().Equals("subsuite")).ToList();
+                            subSuites.ForEach(lbl => x.labels.Remove(lbl));
+                            x.labels.Add(Label.SubSuite("Ignored tests/test-cases"));
+                        });
+                    Thread.Sleep(5);
+                    StopAllureLogging(testResult, pair.Key.Properties
+                        .Get(AllureConstants.TestUuid).ToString(), pair.Key.Properties
+                        .Get(AllureConstants.TestContainerUuid).ToString(), suite, true, pair.Value);
+                }
+            }
+        }
+
+        private static void AddInfoToIgnoredTest(ref TestContext.ResultAdapter testResult)
+        {
+            var prop = testResult.Outcome.GetType().GetProperty(nameof(ResultState.Status));
+            prop.SetValue(testResult.Outcome, TestStatus.Skipped);
+            prop = testResult.Outcome.GetType().GetProperty(nameof(ResultState.Label));
+            prop.SetValue(testResult.Outcome, AllureConstants.TestWasIgnored);
+        }
+
+        #endregion
     }
 }

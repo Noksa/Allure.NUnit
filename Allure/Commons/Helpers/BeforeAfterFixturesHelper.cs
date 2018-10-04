@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
@@ -8,8 +9,9 @@ namespace Allure.Commons.Helpers
 {
     internal static class BeforeAfterFixturesHelper
     {
-        internal static MethodType GetTypeOfCurrentTestMethod()
+        internal static Dictionary<MethodType, string> GetTypeOfCurrentMethodInTest()
         {
+            var dict = new Dictionary<MethodType, string>();
             var stackTrace = new StackTrace();
             var frames = stackTrace.GetFrames();
             var frame = frames?.FirstOrDefault(w =>
@@ -31,23 +33,34 @@ namespace Allure.Commons.Helpers
                                      attr is OneTimeTearDownAttribute);
                 return result;
             });
-            if (frame == null) return MethodType.TestBody;
+            if (frame == null)
+            {
+                dict.Add(MethodType.TestBody, "");
+                return dict;
+            }
+
             var method = frame.GetMethod();
+            var methodName = method.Name;
             var attrs = method.GetCustomAttributes();
+            var methodType = MethodType.TestBody;
             foreach (var attribute in attrs)
                 switch (attribute)
                 {
-                    case SetUpAttribute setup:
-                        return MethodType.Setup;
-                    case OneTimeSetUpAttribute oneTimeSetup:
-                        return MethodType.OneTimeSetup;
-                    case TearDownAttribute tearDown:
-                        return MethodType.Teardown;
-                    case OneTimeTearDownAttribute oneTimeTearDown:
-                        return MethodType.OneTimeTearDown;
+                    case SetUpAttribute _:
+                        methodType = MethodType.Setup;
+                        break;
+                    case OneTimeSetUpAttribute _:
+                        methodType = MethodType.OneTimeSetup;
+                        break;
+                    case TearDownAttribute _:
+                        methodType = MethodType.Teardown;
+                        break;
+                    case OneTimeTearDownAttribute _:
+                        methodType = MethodType.OneTimeTearDown;
+                        break;
                 }
-
-            return MethodType.TestBody;
+            dict.Add(methodType, methodName);
+            return dict;
         }
 
         internal enum MethodType

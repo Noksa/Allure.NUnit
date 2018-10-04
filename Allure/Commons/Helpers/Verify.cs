@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
 using Allure.Commons.Model;
 using NUnit.Framework;
 using NUnit.Framework.Constraints;
@@ -14,44 +11,31 @@ namespace Allure.Commons.Helpers
     {
         #region Assert.Fail
 
-        public void Fail(string stepName)
+        public Verify Fail(string stepName, params object[] stepParams)
         {
-            VerifyRunner(stepName, () => Assert.Fail(stepName));
+            VerifyRunner(stepName, () => Assert.Fail(stepName), Status.failed, stepParams);
+            return this;
+        }
+
+        public Verify Warn(string stepName, params object[] stepParams)
+        {
+            VerifyRunner(stepName, () => Assert.Warn(stepName), Status.broken, stepParams);
+            return this;
+        }
+
+        public Verify Pass(string stepName, params object[] stepParams)
+        {
+            VerifyRunner(stepName, () => { }, Status.failed, stepParams);
+            return this;
         }
 
         #endregion
-        
+
         #region Help members
 
-        private static readonly ThreadLocal<List<Exception>>
-            AssertsListThreadLocal = new ThreadLocal<List<Exception>>();
-
-        public static List<Exception> CurrentTestAsserts =>
-            AssertsListThreadLocal.Value ?? (AssertsListThreadLocal.Value = new List<Exception>());
-
-        private bool VerifyRunner(string stepName, Action action)
+        private bool VerifyRunner(string stepName, Action action, Status stepStatusIfFailed, params object[] stepParams)
         {
-            bool result;
-            var assertsBefore = TestContext.CurrentContext.Result.Assertions.Count();
-            var uuid = $"{Guid.NewGuid():N}";
-            AllureLifecycle.Instance.StartStep(stepName, uuid);
-            try
-            {
-                action.Invoke();
-                AllureLifecycle.Instance.UpdateStep(uuid, _ => _.status = Status.passed);
-                result = true;
-            }
-            catch (Exception e)
-            {
-                result = false;
-                AllureLifecycle.Instance.MakeStepWithExMessage(assertsBefore, stepName, e);
-                AllureLifecycle.CurrentTestActionInException?.Invoke();
-                AllureLifecycle.GlobalActionInException?.Invoke();
-                CurrentTestAsserts.Add(e);
-                AllureLifecycle.Instance.UpdateStep(uuid, _ => _.status = Status.failed);
-            }
-
-            AllureLifecycle.Instance.StopStep(uuid);
+            var result = AllureLifecycle.StepRunner<bool>(stepName, action, false, stepStatusIfFailed, stepParams);
             return result;
         }
 
@@ -85,11 +69,6 @@ namespace Allure.Commons.Helpers
             return StackFilter.DefaultFilter.Filter(SystemEnvironmentFilter.Filter(Environment.StackTrace));
         }
 
-        internal static void Clear()
-        {
-            CurrentTestAsserts.Clear();
-        }
-
         #endregion
 
         #region Assert.That
@@ -106,7 +85,7 @@ namespace Allure.Commons.Helpers
         /// <param name="args">Arguments to be used in formatting the message</param>
         public bool That(string stepName, bool condition, string message, params object[] args)
         {
-            return VerifyRunner(stepName, () => Assert.That(condition, Is.True, message, args));
+            return VerifyRunner(stepName, () => Assert.That(condition, Is.True, message, args), Status.failed);
         }
 
         /// <summary>
@@ -115,9 +94,9 @@ namespace Allure.Commons.Helpers
         /// </summary>
         /// <param name="stepName">The Step Name to Allure report</param>
         /// <param name="condition">The evaluated condition</param>
-        public bool That(string stepName, bool condition)
+        public bool That(string stepName, bool condition, params object[] stepParams)
         {
-            return VerifyRunner(stepName, () => Assert.That(condition, stepName));
+            return VerifyRunner(stepName, () => Assert.That(condition, stepName), Status.failed, stepParams);
         }
 
 #if !NET20
@@ -128,9 +107,10 @@ namespace Allure.Commons.Helpers
         /// <param name="stepName">The Step Name to Allure report</param>
         /// <param name="condition">The evaluated condition</param>
         /// <param name="getExceptionMessage">A function to build the message included with the Exception</param>
-        public bool That(string stepName, bool condition, Func<string> getExceptionMessage)
+        public bool That(string stepName, bool condition, Func<string> getExceptionMessage, params object[] stepParams)
         {
-            return VerifyRunner(stepName, () => Assert.That(condition, Is.True, getExceptionMessage));
+            return VerifyRunner(stepName, () => Assert.That(condition, Is.True, getExceptionMessage), Status.failed,
+                stepParams);
         }
 #endif
 
@@ -158,9 +138,9 @@ namespace Allure.Commons.Helpers
         /// </summary>
         /// <param name="stepName">The Step Name to Allure report</param>
         /// <param name="condition">A lambda that returns a Boolean</param>
-        public bool That(string stepName, Func<bool> condition)
+        public bool That(string stepName, Func<bool> condition, params object[] stepParams)
         {
-            return That(stepName, condition.Invoke(), Is.True, null, null);
+            return That(stepName, condition.Invoke(), Is.True, stepParams);
         }
 
         /// <summary>
@@ -170,9 +150,11 @@ namespace Allure.Commons.Helpers
         /// <param name="stepName">The Step Name to Allure report</param>
         /// <param name="condition">A lambda that returns a Boolean</param>
         /// <param name="getExceptionMessage">A function to build the message included with the Exception</param>
-        public bool That(string stepName, Func<bool> condition, Func<string> getExceptionMessage)
+        public bool That(string stepName, Func<bool> condition, Func<string> getExceptionMessage,
+            params object[] stepParams)
         {
-            return VerifyRunner(stepName, () => Assert.That(condition.Invoke(), Is.True, getExceptionMessage));
+            return VerifyRunner(stepName, () => Assert.That(condition.Invoke(), Is.True, getExceptionMessage),
+                Status.failed, stepParams);
         }
 #endif
 
@@ -188,9 +170,11 @@ namespace Allure.Commons.Helpers
         /// <typeparam name="TActual">The Type being compared.</typeparam>
         /// <param name="del">An ActualValueDelegate returning the value to be tested</param>
         /// <param name="expr">A Constraint expression to be applied</param>
-        public bool That<TActual>(string stepName, ActualValueDelegate<TActual> del, IResolveConstraint expr)
+        public bool That<TActual>(string stepName, ActualValueDelegate<TActual> del, IResolveConstraint expr,
+            params object[] stepParams)
         {
-            return VerifyRunner(stepName, () => Assert.That(del, expr.Resolve(), null, null));
+            return VerifyRunner(stepName, () => Assert.That(del, expr.Resolve(), null, null), Status.failed,
+                stepParams);
         }
 
         /// <summary>
@@ -213,7 +197,7 @@ namespace Allure.Commons.Helpers
                 var result = constraint.ApplyTo(del);
                 if (!result.IsSuccess)
                     ReportFailure(result, message, args);
-            });
+            }, Status.failed);
         }
 
 #if !NET20
@@ -229,7 +213,7 @@ namespace Allure.Commons.Helpers
         public bool That<TActual>(string stepName,
             ActualValueDelegate<TActual> del,
             IResolveConstraint expr,
-            Func<string> getExceptionMessage)
+            Func<string> getExceptionMessage, params object[] stepParams)
         {
             return VerifyRunner(stepName, () =>
             {
@@ -238,7 +222,7 @@ namespace Allure.Commons.Helpers
                 var result = constraint.ApplyTo(del);
                 if (!result.IsSuccess)
                     ReportFailure(result, getExceptionMessage());
-            });
+            }, Status.failed, stepParams);
         }
 #endif
 
@@ -253,9 +237,9 @@ namespace Allure.Commons.Helpers
         /// <param name="stepName">The Step Name to Allure report</param>
         /// <param name="code">A TestDelegate to be executed</param>
         /// <param name="constraint">A ThrowsConstraint used in the test</param>
-        public bool That(string stepName, TestDelegate code, IResolveConstraint constraint)
+        public bool That(string stepName, TestDelegate code, IResolveConstraint constraint, params object[] stepParams)
         {
-            return VerifyRunner(stepName, () => Assert.That(code, constraint, null, null));
+            return VerifyRunner(stepName, () => Assert.That(code, constraint, null, null), Status.failed, stepParams);
         }
 
         /// <summary>
@@ -270,7 +254,7 @@ namespace Allure.Commons.Helpers
         public bool That(string stepName, TestDelegate code, IResolveConstraint constraint, string message,
             params object[] args)
         {
-            return VerifyRunner(stepName, () => Assert.That((object)code, constraint, message, args));
+            return VerifyRunner(stepName, () => Assert.That((object) code, constraint, message, args), Status.failed);
         }
 
 #if !NET20
@@ -283,9 +267,10 @@ namespace Allure.Commons.Helpers
         /// <param name="constraint">A ThrowsConstraint used in the test</param>
         /// <param name="getExceptionMessage">A function to build the message included with the Exception</param>
         public bool That(string stepName, TestDelegate code, IResolveConstraint constraint,
-            Func<string> getExceptionMessage)
+            Func<string> getExceptionMessage, params object[] stepParams)
         {
-            return VerifyRunner(stepName, () => Assert.That((object)code, constraint, getExceptionMessage));
+            return VerifyRunner(stepName, () => Assert.That((object) code, constraint, getExceptionMessage),
+                Status.failed, stepParams);
         }
 #endif
 
@@ -303,9 +288,11 @@ namespace Allure.Commons.Helpers
         /// <typeparam name="TActual">The Type being compared.</typeparam>
         /// <param name="actual">The actual value to test</param>
         /// <param name="expression">A Constraint to be applied</param>
-        public bool That<TActual>(string stepName, TActual actual, IResolveConstraint expression)
+        public bool That<TActual>(string stepName, TActual actual, IResolveConstraint expression,
+            params object[] stepParams)
         {
-            return VerifyRunner(stepName, () => Assert.That(actual, expression, stepName, null));
+            return VerifyRunner(stepName, () => Assert.That(actual, expression, stepName, null), Status.failed,
+                stepParams);
         }
 
         /// <summary>
@@ -318,7 +305,7 @@ namespace Allure.Commons.Helpers
         /// <param name="expression">A Constraint expression to be applied</param>
         /// <param name="message">The message that will be displayed on failure</param>
         /// <param name="args">Arguments to be used in formatting the message</param>
-        public bool That<TActual>(string stepName, TActual actual, IResolveConstraint expression, string message,
+        public bool That<TActual>(string stepName, string message, TActual actual, IResolveConstraint expression,
             params object[] args)
         {
             return VerifyRunner(stepName, () =>
@@ -329,7 +316,7 @@ namespace Allure.Commons.Helpers
                 var result = constraint.ApplyTo(actual);
                 if (!result.IsSuccess)
                     ReportFailure(result, message, args);
-            });
+            }, Status.failed);
         }
 
 #if !NET20
@@ -345,7 +332,7 @@ namespace Allure.Commons.Helpers
         public bool That<TActual>(string stepName,
             TActual actual,
             IResolveConstraint expression,
-            Func<string> getExceptionMessage)
+            Func<string> getExceptionMessage, params object[] stepParams)
         {
             return VerifyRunner(stepName, () =>
             {
@@ -355,7 +342,7 @@ namespace Allure.Commons.Helpers
                 var result = constraint.ApplyTo(actual);
                 if (!result.IsSuccess)
                     ReportFailure(result, getExceptionMessage());
-            });
+            }, Status.failed, stepParams);
         }
 #endif
 
@@ -372,9 +359,9 @@ namespace Allure.Commons.Helpers
         /// <param name="stepName">The Step Name to Allure report</param>
         /// <param name="actual">The actual value to test</param>
         /// <param name="expression">A Constraint to be applied</param>
-        public bool ByVal(string stepName, object actual, IResolveConstraint expression)
+        public bool ByVal(string stepName, object actual, IResolveConstraint expression, params object[] stepParams)
         {
-            return VerifyRunner(stepName, () => Assert.That(actual, expression, null, null));
+            return VerifyRunner(stepName, () => Assert.That(actual, expression, null, null), Status.failed, stepParams);
         }
 
         /// <summary>
@@ -395,7 +382,7 @@ namespace Allure.Commons.Helpers
         public bool ByVal(string stepName, object actual, IResolveConstraint expression, string message,
             params object[] args)
         {
-            return VerifyRunner(stepName, () => Assert.That(actual, expression, message, args));
+            return VerifyRunner(stepName, () => Assert.That(actual, expression, message, args), Status.failed);
         }
 
         #endregion

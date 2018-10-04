@@ -1,22 +1,22 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using Allure.Commons;
 using Allure.Commons.Helpers;
-using Allure.Commons.Model;
 using Allure.Commons.Storage;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
 using NUnit.Framework.Internal;
-using TestResult = Allure.Commons.Model.TestResult;
+using Logger = Allure.Commons.Helpers.Logger;
 
 namespace Allure.NUnit.Attributes
 {
     [AttributeUsage(AttributeTargets.Class)]
-    public class AllureFixtureAttribute : NUnitAttribute, ITestAction
+    public class AllureFixtureAttribute : NUnitAttribute, IApplyToContext
     {
-        private readonly Dictionary<ITest, string> _ignoredTests = new Dictionary<ITest, string>();
+        private static readonly object Locker = new object();
 
         public AllureFixtureAttribute(string description = "")
         {
@@ -25,104 +25,74 @@ namespace Allure.NUnit.Attributes
 
         private string Description { get; }
 
-
-        public ActionTargets Targets => ActionTargets.Suite;
-
-        public void BeforeTest(ITest test)
+        public void ApplyToContext(TestExecutionContext context)
         {
-            var tests = ReportHelper.GetAllTestsInSuite(test);
-            foreach (var nestedTest in tests)
+            lock (Locker)
             {
-                var uuid = $"{nestedTest.Id}_{Guid.NewGuid():N}";
-                nestedTest.Properties.Set(AllureConstants.TestContainerUuid, $"{uuid}-{test.Id}-container");
-                nestedTest.Properties.Set(AllureConstants.TestUuid, $"{uuid}-{test.Id}-test");
-                nestedTest.Properties.Set(AllureConstants.FixtureUuid, $"{test.Id}-fixture");
-            }
-        }
-
-        public void AfterTest(ITest test)
-        {
-            AllureStorage.MainThreadId = Thread.CurrentThread.ManagedThreadId;
-
-            bool IsIgnored(ITest oTest)
-            {
-                return oTest.RunState == RunState.Ignored || oTest.RunState == RunState.Skipped;
-            }
-
-            _ignoredTests.Clear();
-            foreach (var testMethod in test.Tests)
-            {
-                if (!testMethod.HasChildren && IsIgnored(testMethod))
-                    _ignoredTests.Add(testMethod, testMethod.Properties.Get(PropertyNames.SkipReason).ToString());
-
-                if (testMethod.HasChildren && IsIgnored(testMethod))
-                    testMethod.Tests.ToList().ForEach(_ =>
-                        _ignoredTests.Add(_, testMethod.Properties.Get(PropertyNames.SkipReason).ToString()));
-                if (testMethod.HasChildren && !IsIgnored(testMethod))
-                    foreach (var localTest in testMethod.Tests)
-                        if (IsIgnored(localTest))
-                            _ignoredTests.Add(localTest, localTest.Properties.Get(PropertyNames.SkipReason).ToString());
-            }
-
-            FailIgnoredTests(_ignoredTests);
-        }
-
-        #region Privates
-
-        private static void FailIgnoredTests(Dictionary<ITest, string> dict)
-        {
-            foreach (var pair in dict)
-            {
-                var ourFixture = new TestResultContainer
+                AllureStorage.MainThreadId = Thread.CurrentThread.ManagedThreadId;
+                var suite = (TestFixture) context.CurrentTest;
+                var tests = ReportHelper.GetAllTestsInSuite(suite);
+                context.CurrentTest.Properties.Set(AllureConstants.FixtureUuid, $"{suite.FullName}-fixture");
+                context.CurrentTest.Properties.Set(AllureConstants.AllTestsInFixture,
+                    new ConcurrentBag<(string, string, string)>());
+                context.CurrentTest.Properties.Set(AllureConstants.CompletedTestsInFixture,
+                    new ConcurrentBag<(TestContext.ResultAdapter, string, string, string)>());
+                context.CurrentTest.Properties.Set(AllureConstants.RunsCountTests,
+                    new List<(string, string, string)>());
+                foreach (var nestedTest in tests)
                 {
-                    uuid = pair.Key.Properties.Get(AllureConstants.TestContainerUuid).ToString(),
-                    name = pair.Key.ClassName
-                };
-                AllureLifecycle.Instance.StartTestContainer(ourFixture);
+                    var countRun = 1;
+                    StartTestAndAddPropertiesInside(nestedTest, suite, countRun);
+                    countRun++;
+                    nestedTest.Method.GetCustomAttributes<RepeatAttribute>(true).FirstOrDefault()
+                        ?.ApplyToTest((Test) nestedTest);
+                    nestedTest.Method.GetCustomAttributes<RetryAttribute>(true).FirstOrDefault()
+                        ?.ApplyToTest((Test) nestedTest);
 
-                var realUuid = pair.Key.Properties.Get(AllureConstants.TestUuid).ToString();
-                var testResult = new TestResult
-                {
-                    uuid = realUuid,
-                    name = pair.Key.Name,
-                    fullName = pair.Key.FullName,
-                    labels = new List<Label>
+                    if (nestedTest.Properties.ContainsKey(PropertyNames.RepeatCount))
                     {
-                        Label.Thread(),
-                        Label.Host(),
-                        Label.TestClass(pair.Key.ClassName),
-                        Label.TestMethod(pair.Key.MethodName),
-                        Label.Package(pair.Key.ClassName)
+                        var repeatCount = (int) nestedTest.Properties.Get(PropertyNames.RepeatCount);
+
+                        for (var i = 1; i < repeatCount; i++)
+                        {
+                            StartTestAndAddPropertiesInside(nestedTest, suite, countRun);
+                            countRun++;
+                        }
                     }
-                };
-                AllureLifecycle.Instance.StartTestContainer(ourFixture);
-                AllureLifecycle.Instance.UpdateTestContainer(pair.Key.Properties.Get(AllureConstants.TestContainerUuid)
-                    .ToString(), q => q.children.Add(pair.Key.Properties.Get(AllureConstants.TestUuid)
-                    .ToString()));
-                AllureLifecycle.Instance.StartTestCase(testResult);
-                ReportHelper.AddInfoInTestCase(pair.Key);
-                AllureLifecycle.Instance.UpdateTestCase(x =>
-                {
-                    var subSuites = x.labels.Where(lbl => lbl.name.ToLower().Equals("subsuite")).ToList();
-                    subSuites.ForEach(lbl => x.labels.Remove(lbl));
-                    x.labels.Add(Label.SubSuite("Ignored tests/test-cases"));
-                });
-                AllureLifecycle.Instance.StopTestCase(_ =>
-                {
-                    _.status = Status.skipped;
-                    _.statusDetails = new StatusDetails
+
+                    if (nestedTest.Properties.ContainsKey("Retry"))
                     {
-                        message = $"Test was ignored by reason: {pair.Value}"
-                    };
-                });
-                AllureLifecycle.Instance.WriteTestCase(testResult.uuid);
-                AllureLifecycle.Instance.StopTestContainer(pair.Key.Properties.Get(AllureConstants.TestContainerUuid)
-                    .ToString());
-                AllureLifecycle.Instance.WriteTestContainer(pair.Key.Properties.Get(AllureConstants.TestContainerUuid)
-                    .ToString());
+                        var retryCount = (int) nestedTest.Properties.Get("Retry");
+
+                        for (var i = 1; i < retryCount; i++)
+                        {
+                            StartTestAndAddPropertiesInside(nestedTest, suite, countRun);
+                            countRun++;
+                        }
+                    }
+                }
             }
         }
 
-        #endregion
+
+        internal static void StartTestAndAddPropertiesInside(ITest test, TestFixture suite, int countRun)
+        {
+            var uuid = $"{test.Id}_{Guid.NewGuid():N}";
+            var testUuid = $"{uuid}-{suite.Id}-test-run{countRun}";
+            var containerUuid = $"{uuid}-{suite.Id}-run{countRun}-container";
+            var fixtureUuid = suite.GetPropAsString(AllureConstants.FixtureUuid);
+            test.SetProp(AllureConstants.TestContainerUuid, containerUuid);
+            test.SetProp(AllureConstants.TestUuid, testUuid);
+            test.SetProp(AllureConstants.FixtureUuid, fixtureUuid);
+            test.SetProp(AllureConstants.TestAsserts, new List<Exception>());
+            ReportHelper.StartAllureLogging(test, testUuid, containerUuid, suite);
+            Logger.LogInProgress(
+                $"Started allure logging for \"{test.FullName}\", run #{countRun}\n\"{testUuid}\"\n\"{containerUuid}\"\n\"{fixtureUuid}\"");
+
+            suite.GetAllTestsInFixture()
+                .Add((testUuid, containerUuid, fixtureUuid));
+            suite.GetCountTestInFixture()
+                .Add((testUuid, containerUuid, fixtureUuid));
+        }
     }
 }
