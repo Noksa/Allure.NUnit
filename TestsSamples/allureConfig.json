@@ -2,9 +2,7 @@
   "allure": {
     "directory": "allure-results",
     "allowEmptySuites": true,
-    "enableParameters": true,
-    "allowLocalHistoryTrend": false,
-    "debugMode": true
+    "enableParameters": true
   },
 
   "categories": [
