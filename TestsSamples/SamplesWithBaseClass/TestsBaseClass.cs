@@ -12,7 +12,7 @@ namespace TestsSamples.SamplesWithBaseClass
             AllureLifecycle.Instance.RunStep(() =>
             {
                 TestContext.Progress.WriteLine(
-                    $"Test \"{TestExecutionContext.CurrentContext.CurrentTest.FullName}\" is starting...");
+                    $"Test \"{TestExecutionContext.CurrentContext.CurrentTest.FullName}\" is starting...");               
             });
         }
 
