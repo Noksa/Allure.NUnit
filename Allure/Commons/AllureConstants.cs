@@ -2,14 +2,21 @@
 {
     public sealed class AllureConstants
     {
-        public const string ConfigFilename = "allureConfig.json";
-        public const string DefaultResultsFolder = "allure-results";
-        public const string CategoriesFileName = "categories.json";
-        public const string TestResultFileSuffix = "-result.json";
-        public const string TestResultContainerFileSuffix = "-container.json";
-        public const string AttachmentFileSuffix = "-attachment";
-        internal const string TestContainerUuid = "TestContainerUuidProp";
+        #region Public
+
+        public const string TestContainerUuid = "TestContainerUuidProp";
         public const string TestUuid = "TestUuidProp";
+
+        #endregion
+
+        #region Internal
+
+        public const string ConfigFilename = "allureConfig.json";
+        internal const string DefaultResultsFolder = "allure-results";
+        internal const string CategoriesFileName = "categories.json";
+        internal const string TestResultFileSuffix = "-result.json";
+        internal const string TestResultContainerFileSuffix = "-container.json";
+        internal const string AttachmentFileSuffix = "-attachment";
         internal const string FixtureUuid = "FixtureUuidProp";
         internal const string TestAsserts = "TestAssertsProp";
         internal const string TestResult = "TestResultProp";
@@ -26,5 +33,7 @@
         internal const string CurrentTestSetupFixture = "CurrentTestSetupFixtureProp";
         internal const string CurrentTestTearDownFixture = "CurrentTestTearDownFixtureProp";
         internal const string IgnoredTests = "IgnoredTestsProp";
+
+        #endregion
     }
 }

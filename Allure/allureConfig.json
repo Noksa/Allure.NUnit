@@ -3,7 +3,7 @@
     "directory": "allure-results",
     "allowEmptySuites": true,
     "enableParameters": true,
-    "allowLocalHistoryTrend": false
+    "allowLocalHistoryTrend": false // Dont use true when running tests on CI server
   },
 
   "categories": [

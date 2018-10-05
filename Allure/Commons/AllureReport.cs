@@ -28,9 +28,9 @@ namespace Allure.Commons
             // For started tests renew info in props
             var testUuids = TestExecutionContext.CurrentContext.CurrentTest.GetCurrentTestRunInfo();
             var currentTest = TestExecutionContext.CurrentContext.CurrentTest;
-            TestExecutionContext.CurrentContext.CurrentTest.Properties.Set(AllureConstants.TestContainerUuid,
+            currentTest.SetProp(AllureConstants.TestContainerUuid,
                 testUuids.ContainerUuid);
-            TestExecutionContext.CurrentContext.CurrentTest.Properties.Set(AllureConstants.TestUuid,
+            currentTest.SetProp(AllureConstants.TestUuid,
                 testUuids.TestUuid);
             TestExecutionContext.CurrentContext.CurrentResult.SetResult(ResultState.Success);
             AllureStorage.MainThreadId = Thread.CurrentThread.ManagedThreadId;
