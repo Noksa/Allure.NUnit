@@ -25,18 +25,22 @@ You can add both constants and system/CI server variables in this way:
 4) New `AllureLifecycle.Instance.Verify` class to add steps without stopping the test, if an exception was thrown or the check failed.
 In this case, the error information will be added as a substep in a running step with messages of all nested exceptions.
 
-5) New `AllureLifecycle.Instance.RunStep` class for easy recording of steps.<br/> 
-Same as `AllureLifecycle.Instance.Verify`, but stops the test if an error occurred in the step.
+5) New `AllureLifecycle.Instance.RunStep` method for easy recording of steps.<br/> 
+Same as methods in `AllureLifecycle.Instance.Verify` class, but stops the test if an error occurred in the step.
 
-You can also use method `AllureLifecycle.Instance.RunStep` and `AllureLifecycle.Instance.Verify` class methods inside each other as many times as you like.
+You can also use method `AllureLifecycle.Instance.RunStep` and `AllureLifecycle.Instance.Verify` methods inside each other as many times as you like.
 
 
-Example of `AllureLifecycle.Instance.RunStep`, test stopped after fail:<br/><br/>
+`AllureLifecycle.Instance.RunStep` example, test stopped after fail:<br/><br/>
 ![alt text](https://github.com/Noksa/Allure.NUnit/blob/master/Allure/ScreenshotsReadme/RunStepExample.PNG)
 <br/><br/>
 
-Example of `AllureLifecycle.Instance.Verify` any method, test not stopped at fail:<br/><br/>
+`AllureLifecycle.Instance.Verify` example, test not stopped at fail:<br/><br/>
 ![alt text](https://github.com/Noksa/Allure.NUnit/blob/master/Allure/ScreenshotsReadme/VerifyStepExample.PNG)<br/>
+<br/><br/>
+
+`AllureLifecycle.Instance.Verify` multiple calls, test collect all errors:<br/><br/>
+![alt text](https://github.com/Noksa/Allure.NUnit/blob/master/Allure/ScreenshotsReadme/MultiVerifyExample.PNG)
 6) Two new tuning methods:
 `AllureLifecycle.Instance.SetGlobalActionInException (Action action)` and `AllureLifecycle.Instance.SetCurrentTestActionInException (Action action)`<br/>
 You can specify which actions you need to additionally perform if an error occurred in the `RunStep` method or in the checks in the `Verify` class.<br/>
