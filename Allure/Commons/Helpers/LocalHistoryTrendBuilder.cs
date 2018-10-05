@@ -8,7 +8,7 @@ using Newtonsoft.Json;
 
 namespace Allure.Commons.Helpers
 {
-    internal class LocalHistoryTrendMaker
+    internal static class LocalHistoryTrendBuilder
     {
         internal static void MakeLocalHistoryTrend()
         {

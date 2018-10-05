@@ -10,9 +10,9 @@ using NUnit.Framework.Internal;
 
 namespace Allure.Commons.Helpers
 {
-    internal static class BeforeAfterFixturesHelper
+    internal static class AllureStageHelper
     {
-        internal static Dictionary<MethodType, string> GetTypeOfCurrentMethodInTest()
+        internal static Dictionary<MethodType, string> GetCurrentAllureStageInfo()
         {
             var dict = new Dictionary<MethodType, string>();
             var methods = GetCallStackMethods().ToList();
@@ -20,7 +20,7 @@ namespace Allure.Commons.Helpers
             {
                 var sb = new StringBuilder();
                 methods.ForEach(m => sb.AppendLine(m.Name));
-                Logger.LogInProgress(
+                OutLogger.LogInProgress(
                     $"Test ID {TestExecutionContext.CurrentContext.CurrentTest.Id}, Thread ID {Thread.CurrentThread.ManagedThreadId}, call stack at this moment\n {sb}");
                 sb.Clear();
             }
@@ -37,11 +37,11 @@ namespace Allure.Commons.Helpers
                 }
 
                 var result = sMethod.DeclaringType != typeof(AllureReport) &&
-                    sMethod.GetCustomAttributes().Any(
-                        attr =>
-                            attr is SetUpAttribute || attr is OneTimeSetUpAttribute ||
-                            attr is TearDownAttribute ||
-                            attr is OneTimeTearDownAttribute);
+                             sMethod.GetCustomAttributes().Any(
+                                 attr =>
+                                     attr is SetUpAttribute || attr is OneTimeSetUpAttribute ||
+                                     attr is TearDownAttribute ||
+                                     attr is OneTimeTearDownAttribute);
                 return result;
             });
             if (method == null)

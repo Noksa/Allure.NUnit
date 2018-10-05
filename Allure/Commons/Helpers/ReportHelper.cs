@@ -65,9 +65,8 @@ namespace Allure.Commons.Helpers
         internal static string GenerateFullNameWithParameters(ITest iTest, string suiteNameFromAttr)
         {
             if (iTest.IsSuite)
-            {
-                if (!AllureLifecycle.Instance.Config.Allure.EnableParameters) return suiteNameFromAttr;
-            }
+                if (!AllureLifecycle.Instance.Config.Allure.EnableParameters)
+                    return suiteNameFromAttr;
 
             var listOfArgs = iTest.Arguments.ToList();
             if (listOfArgs.Count == 0) return suiteNameFromAttr;
@@ -284,7 +283,7 @@ namespace Allure.Commons.Helpers
             var result = testResult;
             var testMsg = result.Message;
             var testStackTrace = result.StackTrace;
-            Logger.LogInProgress(
+            OutLogger.LogInProgress(
                 $"Entering stop allure logging for \"{testUuid}\"");
 
             if (!string.IsNullOrEmpty(ignoreReason)) testMsg = ignoreReason;
@@ -303,7 +302,7 @@ namespace Allure.Commons.Helpers
             AllureLifecycle.Instance.StopTestContainer(
                 testContainerUuid, updateStopTime);
             AllureLifecycle.Instance.WriteTestContainer(testContainerUuid);
-            Logger.LogInProgress($"Stopped allure logging for test {testUuid}, {testContainerUuid}, {ignoreReason}");
+            OutLogger.LogInProgress($"Stopped allure logging for test {testUuid}, {testContainerUuid}, {ignoreReason}");
         }
 
         internal static string MakeGoodErrorMsg(string errorMsg)
@@ -328,15 +327,15 @@ namespace Allure.Commons.Helpers
             foreach (var testMethod in suite.Tests)
             {
                 if (!testMethod.HasChildren && IsIgnored(testMethod))
-                    ignoredTests.Add(testMethod, testMethod.Properties.Get(PropertyNames.SkipReason).ToString());
+                    ignoredTests.Add(testMethod, testMethod.GetPropAsString(PropertyNames.SkipReason));
 
                 if (testMethod.HasChildren && IsIgnored(testMethod))
                     testMethod.Tests.ToList().ForEach(_ =>
-                        ignoredTests.Add(_, testMethod.Properties.Get(PropertyNames.SkipReason).ToString()));
+                        ignoredTests.Add(_, testMethod.GetPropAsString(PropertyNames.SkipReason)));
                 if (testMethod.HasChildren && !IsIgnored(testMethod))
                     foreach (var localTest in testMethod.Tests)
                         if (IsIgnored(localTest))
-                            ignoredTests.Add(localTest, localTest.Properties.Get(PropertyNames.SkipReason).ToString());
+                            ignoredTests.Add(localTest, localTest.GetPropAsString(PropertyNames.SkipReason));
             }
 
             suite.SetProp(AllureConstants.IgnoredTests, ignoredTests);
@@ -351,21 +350,20 @@ namespace Allure.Commons.Helpers
             {
                 foreach (var pair in dict)
                 {
-                    pair.Key.Properties.Set(AllureConstants.TestIgnoreReason,
+                    pair.Key.SetProp(AllureConstants.TestIgnoreReason,
                         $"Test was ignored by reason: {pair.Value}");
                     var testResult = new TestContext.ResultAdapter(new TestCaseResult(new TestMethod(pair.Key.Method)));
                     AddInfoToIgnoredTest(ref testResult);
-                    pair.Key.Properties.Set(AllureConstants.TestResult, testResult);
+                    pair.Key.SetProp(AllureConstants.TestResult, testResult);
                     AllureLifecycle.Instance.Storage.ClearStepContext();
-                    AllureLifecycle.Instance.Storage.CurrentThreadStepContext.AddLast(pair.Key.Properties
-                        .Get(AllureConstants.TestUuid).ToString());
+                    AllureLifecycle.Instance.Storage.CurrentThreadStepContext.AddLast(
+                        pair.Key.GetPropAsString(AllureConstants.TestUuid));
                     AllureLifecycle.Instance.StartStepAndStopIt(null, $"Test was ignored by reason: {pair.Value}",
                         Status.skipped);
                     AllureLifecycle.Instance.UpdateTestContainer(
-                        pair.Key.Properties.Get(AllureConstants.TestContainerUuid).ToString(),
+                        pair.Key.GetProp(AllureConstants.TestContainerUuid).ToString(),
                         x => x.start = AllureLifecycle.ToUnixTimestamp());
-                    AllureLifecycle.Instance.UpdateTestCase(pair.Key.Properties
-                            .Get(AllureConstants.TestUuid).ToString(),
+                    AllureLifecycle.Instance.UpdateTestCase(pair.Key.GetProp(AllureConstants.TestUuid).ToString(),
                         x =>
                         {
                             x.start = AllureLifecycle.ToUnixTimestamp();
@@ -376,9 +374,8 @@ namespace Allure.Commons.Helpers
                             x.labels.Add(Label.SubSuite("Ignored tests/test-cases"));
                         });
                     Thread.Sleep(5);
-                    StopAllureLogging(testResult, pair.Key.Properties
-                        .Get(AllureConstants.TestUuid).ToString(), pair.Key.Properties
-                        .Get(AllureConstants.TestContainerUuid).ToString(), suite, true, pair.Value);
+                    StopAllureLogging(testResult, pair.Key.GetPropAsString(AllureConstants.TestUuid),
+                        pair.Key.GetPropAsString(AllureConstants.TestContainerUuid), suite, true, pair.Value);
                 }
             }
         }

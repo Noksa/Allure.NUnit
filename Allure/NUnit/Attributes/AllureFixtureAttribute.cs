@@ -9,7 +9,6 @@ using Allure.Commons.Storage;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
 using NUnit.Framework.Internal;
-using Logger = Allure.Commons.Helpers.Logger;
 
 namespace Allure.NUnit.Attributes
 {
@@ -32,13 +31,13 @@ namespace Allure.NUnit.Attributes
                 AllureStorage.MainThreadId = Thread.CurrentThread.ManagedThreadId;
                 var suite = (TestFixture) context.CurrentTest;
                 var tests = ReportHelper.GetAllTestsInSuite(suite);
-                context.CurrentTest.Properties.Set(AllureConstants.FixtureUuid, $"{suite.FullName}-fixture");
-                context.CurrentTest.Properties.Set(AllureConstants.AllTestsInFixture,
-                    new ConcurrentBag<(string, string, string)>());
-                context.CurrentTest.Properties.Set(AllureConstants.CompletedTestsInFixture,
-                    new ConcurrentBag<(TestContext.ResultAdapter, string, string, string)>());
-                context.CurrentTest.Properties.Set(AllureConstants.RunsCountTests,
-                    new List<(string, string, string)>());
+                context.CurrentTest.SetProp(AllureConstants.FixtureUuid, $"{suite.FullName}-fixture")
+                    .SetProp(AllureConstants.AllTestsInFixture,
+                        new ConcurrentBag<(string, string, string)>())
+                    .SetProp(AllureConstants.CompletedTestsInFixture,
+                        new ConcurrentBag<(TestContext.ResultAdapter, string, string, string)>())
+                    .SetProp(AllureConstants.RunsCountTests,
+                        new List<(string, string, string)>());
                 foreach (var nestedTest in tests)
                 {
                     var countRun = 1;
@@ -49,9 +48,9 @@ namespace Allure.NUnit.Attributes
                     nestedTest.Method.GetCustomAttributes<RetryAttribute>(true).FirstOrDefault()
                         ?.ApplyToTest((Test) nestedTest);
 
-                    if (nestedTest.Properties.ContainsKey(PropertyNames.RepeatCount))
+                    if (nestedTest.ContainsProp(PropertyNames.RepeatCount))
                     {
-                        var repeatCount = (int) nestedTest.Properties.Get(PropertyNames.RepeatCount);
+                        var repeatCount = (int) nestedTest.GetProp(PropertyNames.RepeatCount);
 
                         for (var i = 1; i < repeatCount; i++)
                         {
@@ -60,9 +59,9 @@ namespace Allure.NUnit.Attributes
                         }
                     }
 
-                    if (nestedTest.Properties.ContainsKey("Retry"))
+                    if (nestedTest.ContainsProp("Retry"))
                     {
-                        var retryCount = (int) nestedTest.Properties.Get("Retry");
+                        var retryCount = (int) nestedTest.GetProp("Retry");
 
                         for (var i = 1; i < retryCount; i++)
                         {
@@ -81,12 +80,13 @@ namespace Allure.NUnit.Attributes
             var testUuid = $"{uuid}-{suite.Id}-test-run{countRun}";
             var containerUuid = $"{uuid}-{suite.Id}-run{countRun}-container";
             var fixtureUuid = suite.GetPropAsString(AllureConstants.FixtureUuid);
-            test.SetProp(AllureConstants.TestContainerUuid, containerUuid);
-            test.SetProp(AllureConstants.TestUuid, testUuid);
-            test.SetProp(AllureConstants.FixtureUuid, fixtureUuid);
-            test.SetProp(AllureConstants.TestAsserts, new List<Exception>());
+
+            test.SetProp(AllureConstants.TestContainerUuid, containerUuid)
+                .SetProp(AllureConstants.TestUuid, testUuid)
+                .SetProp(AllureConstants.FixtureUuid, fixtureUuid)
+                .SetProp(AllureConstants.TestAsserts, new List<Exception>());
             ReportHelper.StartAllureLogging(test, testUuid, containerUuid, suite);
-            Logger.LogInProgress(
+            OutLogger.LogInProgress(
                 $"Started allure logging for \"{test.FullName}\", run #{countRun}\n\"{testUuid}\"\n\"{containerUuid}\"\n\"{fixtureUuid}\"");
 
             suite.GetAllTestsInFixture()

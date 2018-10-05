@@ -7,7 +7,6 @@ using Allure.Commons.Helpers;
 using Allure.Commons.Model;
 using NUnit.Framework;
 using NUnit.Framework.Internal;
-using Logger = Allure.Commons.Helpers.Logger;
 
 namespace Allure.Commons.Storage
 {
@@ -84,9 +83,9 @@ namespace Allure.Commons.Storage
 
         public string GetCurrentStep()
         {
-            var methodInfo = BeforeAfterFixturesHelper.GetTypeOfCurrentMethodInTest();
+            var methodInfo = AllureStageHelper.GetCurrentAllureStageInfo();
             var currentTestOrSuite = TestExecutionContext.CurrentContext.CurrentTest;
-            if (methodInfo.Keys.First() == BeforeAfterFixturesHelper.MethodType.OneTimeSetup)
+            if (methodInfo.Keys.First() == AllureStageHelper.MethodType.OneTimeSetup)
             {
                 var oneTimeSetUpFixture =
                     currentTestOrSuite.GetCurrentOneTimeSetupFixture();
@@ -119,7 +118,7 @@ namespace Allure.Commons.Storage
                 }
             }
 
-            if (methodInfo.Keys.First() == BeforeAfterFixturesHelper.MethodType.Setup)
+            if (methodInfo.Keys.First() == AllureStageHelper.MethodType.Setup)
                 if (currentTestOrSuite.GetCurrentTestSetupFixture() == null)
                 {
                     var fixture = new FixtureResult {name = methodInfo.Values.First()};
@@ -131,7 +130,7 @@ namespace Allure.Commons.Storage
                     currentTestOrSuite.SetCurrentTestSetupFixture(fixture);
                 }
 
-            if (methodInfo.Keys.First() == BeforeAfterFixturesHelper.MethodType.TestBody)
+            if (methodInfo.Keys.First() == AllureStageHelper.MethodType.TestBody)
                 if (currentTestOrSuite.GetCurrentTestSetupFixture() != null)
                 {
                     AllureLifecycle.Instance.StopFixture(q =>
@@ -144,7 +143,7 @@ namespace Allure.Commons.Storage
                     CurrentThreadStepContext = TempContext;
                 }
 
-            if (methodInfo.Keys.First() == BeforeAfterFixturesHelper.MethodType.Teardown)
+            if (methodInfo.Keys.First() == AllureStageHelper.MethodType.Teardown)
                 if (currentTestOrSuite.GetCurrentTestTearDownFixture() == null)
                 {
                     if (currentTestOrSuite.GetCurrentTestSetupFixture() != null)
@@ -164,26 +163,22 @@ namespace Allure.Commons.Storage
 
                     var fixture = new FixtureResult {name = methodInfo.Values.First()};
                     AllureLifecycle.Instance.StartAfterFixture(
-                        TestExecutionContext.CurrentContext.CurrentTest.Properties
-                            .Get(AllureConstants.TestContainerUuid)
-                            .ToString(),
-                        $"{TestExecutionContext.CurrentContext.CurrentTest.Properties.Get(AllureConstants.TestUuid)}-after",
+                        currentTestOrSuite.GetPropAsString(AllureConstants.TestContainerUuid),
+                        $"{currentTestOrSuite.GetProp(AllureConstants.TestUuid)}-after",
                         fixture);
                     currentTestOrSuite.SetCurrentTestTearDownFixture(fixture);
                 }
 
-            if (methodInfo.Keys.First() == BeforeAfterFixturesHelper.MethodType.OneTimeTearDown)
+            if (methodInfo.Keys.First() == AllureStageHelper.MethodType.OneTimeTearDown)
                 if (currentTestOrSuite.GetCurrentOneTimeTearDownFixture() == null)
                 {
                     TempContext = new LinkedList<string>(CurrentThreadStepContext);
                     var oneTimeTearDownFixture = new FixtureResult {name = methodInfo.Values.First()};
-                    foreach (var tuple in TestExecutionContext.CurrentContext.CurrentTest.GetAllTestsInFixture())
+                    foreach (var tuple in currentTestOrSuite.GetAllTestsInFixture())
                         AllureLifecycle.Instance.StartAfterFixture(tuple.TestContainerUuid,
                             $"{tuple.FixtureUuid}-onetimeteardown",
                             oneTimeTearDownFixture);
-                    oneTimeTearDownFixture.suiteUuid = TestContext.CurrentContext.Test.Properties
-                        .Get(AllureConstants.FixtureUuid)
-                        .ToString();
+                    oneTimeTearDownFixture.suiteUuid = currentTestOrSuite.GetPropAsString(AllureConstants.FixtureUuid);
                     currentTestOrSuite.SetCurrentOneTimeTearDownFixture(oneTimeTearDownFixture);
                 }
 

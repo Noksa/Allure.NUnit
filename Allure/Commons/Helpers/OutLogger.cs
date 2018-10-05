@@ -2,7 +2,7 @@
 
 namespace Allure.Commons.Helpers
 {
-    internal static class Logger
+    internal static class OutLogger
     {
         private static readonly object LogLocker = new object();
 

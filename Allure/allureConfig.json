@@ -1,50 +1,50 @@
 ﻿{
-  "allure": {
-    "directory": "allure-results",
-    "allowEmptySuites": true,
-    "enableParameters": true,
-    "allowLocalHistoryTrend": false
-  },
+	"allure": {
+		"directory": "allure-results",
+		"allowEmptySuites": true,
+		"enableParameters": true,
+		"allowLocalHistoryTrend": false
+	},
 
-  "categories": [
-    {
-      "name": "Problems with locators",
-      "traceRegex": ".*NoSuchElementException.*"
-    },
-    {
-      "name": "Problems with DOM",
-      "traceRegex": ".*StaleElementReferenceException.*"
-    },
-    {
-      "name": "Problems with timeout",
-      "messageRegex": ".*Timed out.*",
-      "traceRegex": ".*"
-    },
-    {
-      "name": "Broken tests",
-      "matchedStatuses": ["broken"]
-    },
-    {
-      "name": "Ignored tests",
-      "matchedStatuses": ["skipped"]
-    },
-    {
-      "name": "Defected tests",
-      "matchedStatuses": ["failed"]
-    },
-    {
-      "name": "Passed tests",
-      "matchedStatuses": ["passed"]
-    }
-  ],
+	"categories": [
+		{
+			"name": "Problems with locators",
+			"traceRegex": ".*NoSuchElementException.*"
+		},
+		{
+			"name": "Problems with DOM",
+			"traceRegex": ".*StaleElementReferenceException.*"
+		},
+		{
+			"name": "Problems with timeout",
+			"messageRegex": ".*Timed out.*",
+			"traceRegex": ".*"
+		},
+		{
+			"name": "Broken tests",
+			"matchedStatuses": ["broken"]
+		},
+		{
+			"name": "Ignored tests",
+			"matchedStatuses": ["skipped"]
+		},
+		{
+			"name": "Defected tests",
+			"matchedStatuses": ["failed"]
+		},
+		{
+			"name": "Passed tests",
+			"matchedStatuses": ["passed"]
+		}
+	],
 
-  "environment": {
-    "TestVariable": "This is value of test variable. Remove it from allureConfig.json",
-    "runtime": [
-      {
-        "OS": "System.Environment.OS",
-        "AllureVersion": "Allure.Commons.AllureLifecycle.AllureVersion"
-      }
-    ]
-  }
+	"environment": {
+		"TestVariable": "This is value of test variable. Remove it from allureConfig.json",
+		"runtime": [
+			{
+				"OS": "System.Environment.OS",
+				"AllureVersion": "Allure.Commons.AllureLifecycle.AllureVersion"
+			}
+		]
+	}
 }

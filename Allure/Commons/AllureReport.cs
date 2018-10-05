@@ -9,7 +9,6 @@ using Allure.NUnit.Attributes;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
 using NUnit.Framework.Internal;
-using Logger = Allure.Commons.Helpers.Logger;
 
 // ReSharper disable CollectionNeverUpdated.Local
 #pragma warning disable 649
@@ -29,9 +28,9 @@ namespace Allure.Commons
             var testUuids = TestExecutionContext.CurrentContext.CurrentTest.GetCurrentTestRunInfo();
             var currentTest = TestExecutionContext.CurrentContext.CurrentTest;
             currentTest.SetProp(AllureConstants.TestContainerUuid,
-                testUuids.ContainerUuid);
-            currentTest.SetProp(AllureConstants.TestUuid,
-                testUuids.TestUuid);
+                    testUuids.ContainerUuid)
+                .SetProp(AllureConstants.TestUuid,
+                    testUuids.TestUuid);
             TestExecutionContext.CurrentContext.CurrentResult.SetResult(ResultState.Success);
             AllureStorage.MainThreadId = Thread.CurrentThread.ManagedThreadId;
             AllureLifecycle.CurrentTestActionsInException = null;
@@ -90,20 +89,20 @@ namespace Allure.Commons
         [OneTimeSetUp]
         public void AllureOneTimeSetUp()
         {
-            Logger.LogInProgress(
-                $"Entering OneTimeSetup for \"{TestContext.CurrentContext.Test.Properties.Get(AllureConstants.FixtureUuid)}\"");
             AllureStorage.MainThreadId = Thread.CurrentThread.ManagedThreadId;
             _currentSuite = (TestFixture) TestExecutionContext.CurrentContext.CurrentTest;
+            OutLogger.LogInProgress(
+                $"Entering OneTimeSetup for \"{_currentSuite.GetProp(AllureConstants.FixtureUuid)}\"");
             var allTests = ReportHelper.GetAllTestsInSuite(_currentSuite);
             _currentSuiteTests = allTests;
-            Logger.LogInProgress(
+            OutLogger.LogInProgress(
                 $"Exiting OneTimeSetup for \"{_currentSuite.GetProp(AllureConstants.FixtureUuid)}\"");
         }
 
         [OneTimeTearDown]
         public void AllureOneTimeTearDown()
         {
-            Logger.LogInProgress(
+            OutLogger.LogInProgress(
                 $"Entering OneTimeTearDown for \"{_currentSuite.GetProp(AllureConstants.FixtureUuid)}\"");
 
             if (_currentSuite.GetCurrentOneTimeTearDownFixture() != null)
@@ -130,7 +129,7 @@ namespace Allure.Commons
                     {suiteUuid = "null"});
             }
 
-            foreach (var testTupleInfo in TestExecutionContext.CurrentContext.CurrentTest.GetCompletedTestsInFixture())
+            foreach (var testTupleInfo in _currentSuite.GetCompletedTestsInFixture())
             {
                 AllureLifecycle.Instance.Storage.ClearStepContext();
                 AllureLifecycle.Instance.Storage.CurrentThreadStepContext.AddLast(testTupleInfo.TestUuid);
@@ -147,30 +146,29 @@ namespace Allure.Commons
                     AllureStorage.MainThreadId = Thread.CurrentThread.ManagedThreadId;
                     foreach (var test in _currentSuiteTests)
                     {
-                        test.Properties.Set(AllureConstants.TestResult, TestContext.CurrentContext.Result);
+                        test.SetProp(AllureConstants.TestResult, TestContext.CurrentContext.Result);
                         AllureLifecycle.Instance.UpdateTestContainer(
-                            test.Properties.Get(AllureConstants.TestContainerUuid)
-                                .ToString(),
+                            test.GetPropAsString(AllureConstants.TestContainerUuid)
+                            ,
                             x => x.start = AllureLifecycle.ToUnixTimestamp());
-                        AllureLifecycle.Instance.UpdateTestCase(test.Properties
-                                .Get(AllureConstants.TestUuid).ToString(),
+                        AllureLifecycle.Instance.UpdateTestCase(test.GetPropAsString(AllureConstants.TestUuid),
                             x => { x.start = AllureLifecycle.ToUnixTimestamp(); });
                         Thread.Sleep(5);
                         AllureLifecycle.Instance.Storage.ClearStepContext();
-                        AllureLifecycle.Instance.Storage.CurrentThreadStepContext.AddLast(test.Properties
-                            .Get(AllureConstants.TestUuid).ToString());
+                        AllureLifecycle.Instance.Storage.CurrentThreadStepContext.AddLast(
+                            test.GetPropAsString(AllureConstants.TestUuid));
                         AllureLifecycle.Instance.StartStepAndStopIt(null, "The test was not started",
                             Status.failed);
                         AllureLifecycle.Instance.UpdateTestCase(
-                            test.Properties.Get(AllureConstants.TestUuid).ToString(),
+                            test.GetPropAsString(AllureConstants.TestUuid),
                             x =>
                             {
                                 x.labels.RemoveAll(q => q.name == "thread");
                                 x.labels.Add(Label.Thread());
                             });
-                        ReportHelper.StopAllureLogging(TestContext.CurrentContext.Result, test.Properties
-                            .Get(AllureConstants.TestUuid).ToString(), test.Properties
-                            .Get(AllureConstants.TestContainerUuid).ToString(), _currentSuite, true, null);
+                        ReportHelper.StopAllureLogging(TestContext.CurrentContext.Result,
+                            test.GetPropAsString(AllureConstants.TestUuid),
+                            test.GetPropAsString(AllureConstants.TestContainerUuid), _currentSuite, true, null);
                     }
                 }
 
@@ -181,8 +179,8 @@ namespace Allure.Commons
                 EnvironmentBuilder.BuildEnvFile(new DirectoryInfo(AllureLifecycle.Instance.ResultsDirectory));
             }
 
-            Logger.LogInProgress(
-                $"Exiting OneTimeTearDown for \"{TestContext.CurrentContext.Test.Properties.Get(AllureConstants.FixtureUuid)}\"");
+            OutLogger.LogInProgress(
+                $"Exiting OneTimeTearDown for \"{_currentSuite.GetProp(AllureConstants.FixtureUuid)}\"");
         }
 
         protected string MakeGoodErrorMsg(string errorMsg)

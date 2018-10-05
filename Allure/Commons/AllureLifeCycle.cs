@@ -17,6 +17,8 @@ using Allure.Commons.Writer;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
+using NUnit.Framework.Internal;
+using TestResult = Allure.Commons.Model.TestResult;
 
 namespace Allure.Commons
 {
@@ -68,7 +70,7 @@ namespace Allure.Commons
                 lock (Locker)
                 {
                     _instance = new AllureLifecycle();
-                    LocalHistoryTrendMaker.MakeLocalHistoryTrend();
+                    LocalHistoryTrendBuilder.MakeLocalHistoryTrend();
                     _instance.SetDefaultResultsWriter(_instance.Config.Allure.Directory);
                     var categories = _instance.Config.Categories;
                     MakeCategoriesFile(categories, _instance._writer.Dir);
@@ -347,7 +349,8 @@ namespace Allure.Commons
                     stepStatus = stepStatusIfFailed;
 
                 var list =
-                    TestContext.CurrentContext.Test.Properties.Get(AllureConstants.TestAsserts) as List<Exception>;
+                    TestExecutionContext.CurrentContext.CurrentTest.GetProp(AllureConstants.TestAsserts) as
+                        List<Exception>;
                 list?.Add(throwedEx);
                 if (!throwedEx.Data.Contains("Rethrow"))
                 {

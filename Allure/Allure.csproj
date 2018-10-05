@@ -40,10 +40,6 @@
     </PackageReference>
 	</ItemGroup>
   
-  <ItemGroup>
-    <Folder Include="ScreenshotsReadme\" />
-  </ItemGroup>
-  
   
 
 </Project>
