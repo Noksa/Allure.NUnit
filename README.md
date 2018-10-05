@@ -9,17 +9,17 @@ Everything else is optional and is not required to enable reporting.
 ### Some new features:
 1) Steps in `[Setup]` `[TearDown]` and `[OneTimeSetup]` `[OneTimeTearDown]` will be displayed in report:
 
-![alt text](https://github.com/Noksa/Allure.NUnit/blob/master/Allure/ScreenshotsReadme/StepsExample.png)
+![alt text](https://github.com/Noksa/Allure.NUnit/blob/master/TestsSamples/ScreenshotsReadme/StepsExample.png)
 
 2) Using `allureConfig.json` you can add your own categories to the report.
 
 3) Using `allureConfig.json`, you can add environment variables to the report.
 You can add both constants and system/CI server variables in this way:
-* Constants:<br/> ![alt text](https://github.com/Noksa/Allure.NUnit/blob/master/Allure/ScreenshotsReadme/ConstantsEnvExample.png)<br/>
+* Constants:<br/> ![alt text](https://github.com/Noksa/Allure.NUnit/blob/master/TestsSamples/ScreenshotsReadme/ConstantsEnvExample.png)<br/>
 * Runtime variables in `environment.runtime` block, syntax: `Namespace.ClassName.MemberName`:<br/> ![alt text](https://github.com/Noksa/Allure.NUnit/blob/master/Allure/ScreenshotsReadme/RuntimeVariablesExample.png)<br/>
 <br/>__Works with public/internal/private static fields, static properties and with constants.__<br/>
 * System or CI server variables in `environment.runtime` block, syntax `System.Environment.NameOfVariable`:<br/>
-![alt text](https://github.com/Noksa/Allure.NUnit/blob/master/Allure/ScreenshotsReadme/SystemVariablesExample.png)
+![alt text](https://github.com/Noksa/Allure.NUnit/blob/master/TestsSamples/ScreenshotsReadmee/SystemVariablesExample.png)
 
 
 4) New `AllureLifecycle.Instance.Verify` class to add steps without stopping the test, if an exception was thrown or the check failed.
@@ -32,15 +32,15 @@ You can also use method `AllureLifecycle.Instance.RunStep` and `AllureLifecycle.
 
 
 `AllureLifecycle.Instance.RunStep` example, test stopped after fail:<br/><br/>
-![alt text](https://github.com/Noksa/Allure.NUnit/blob/master/Allure/ScreenshotsReadme/RunStepExample.PNG)
+![alt text](https://github.com/Noksa/Allure.NUnit/blob/master/TestsSamples/ScreenshotsReadme/RunStepExample.PNG)
 <br/><br/>
 
 `AllureLifecycle.Instance.Verify` example, test not stopped at fail:<br/><br/>
-![alt text](https://github.com/Noksa/Allure.NUnit/blob/master/Allure/ScreenshotsReadme/VerifyStepExample.PNG)<br/>
+![alt text](https://github.com/Noksa/Allure.NUnit/blob/master/TestsSamples/ScreenshotsReadme/VerifyStepExample.PNG)<br/>
 <br/><br/>
 
 `AllureLifecycle.Instance.Verify` multiple calls example, test collect all errors:<br/><br/>
-![alt text](https://github.com/Noksa/Allure.NUnit/blob/master/Allure/ScreenshotsReadme/MultiVerifyExample.PNG)
+![alt text](https://github.com/Noksa/Allure.NUnit/blob/master/TestsSamples/ScreenshotsReadme/MultiVerifyExample.PNG)
 6) Two new tuning methods:
 `AllureLifecycle.Instance.SetGlobalActionInException (Action action)` and `AllureLifecycle.Instance.SetCurrentTestActionInException (Action action)`<br/>
 You can specify which actions you need to additionally perform if an error occurred in the `RunStep` method or in the checks in the `Verify` class.<br/>
