@@ -36,7 +36,7 @@ namespace Allure.Commons.Helpers
                     return false;
                 }
 
-                var result =
+                var result = sMethod.DeclaringType != typeof(AllureReport) &&
                     sMethod.GetCustomAttributes().Any(
                         attr =>
                             attr is SetUpAttribute || attr is OneTimeSetUpAttribute ||

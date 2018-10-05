@@ -81,5 +81,12 @@ namespace TestsSamples
             AllureLifecycle.Instance.RunStep("This is step in retry test", () => { });
             Assert.Fail($"This is retry fail {TestContext.CurrentContext.Random.Next(1, 5000)}");
         }
+
+        [TestCase("login1", "password1")]
+        [AllureRemoveParams(2)]
+        public void LoginToApp(string login1, string password)
+        {
+            // code here
+        }
     }
 }

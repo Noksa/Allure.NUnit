@@ -62,10 +62,14 @@ namespace Allure.Commons.Helpers
             }
         }
 
-        internal static string GenerateFixtureNameWithParameters(ITest suite, string suiteNameFromAttr)
+        internal static string GenerateFullNameWithParameters(ITest iTest, string suiteNameFromAttr)
         {
-            if (!AllureLifecycle.Instance.Config.Allure.EnableParameters) return suiteNameFromAttr;
-            var listOfArgs = suite.Arguments.ToList();
+            if (iTest.IsSuite)
+            {
+                if (!AllureLifecycle.Instance.Config.Allure.EnableParameters) return suiteNameFromAttr;
+            }
+
+            var listOfArgs = iTest.Arguments.ToList();
             if (listOfArgs.Count == 0) return suiteNameFromAttr;
             var suiteFullName = $"{suiteNameFromAttr} (";
             foreach (var arg in listOfArgs)
@@ -179,7 +183,7 @@ namespace Allure.Commons.Helpers
                         AllureLifecycle.Instance.UpdateTestCase(
                             testUuid, x =>
                             {
-                                var suiteName = GenerateFixtureNameWithParameters(suite, suiteAttr.Suite);
+                                var suiteName = GenerateFullNameWithParameters(suite, suiteAttr.Suite);
                                 x.labels.Add(Label.Suite(suiteName));
                             });
                         break;
@@ -247,6 +251,7 @@ namespace Allure.Commons.Helpers
         internal static void StartAllureLogging(ITest test, string testUuid, string testContainerUuid,
             TestFixture fixture)
         {
+            var testFullNameForLog = GenerateFullNameWithParameters(test, test.FullName);
             var ourFixture = new TestResultContainer
             {
                 uuid = testContainerUuid,
@@ -257,7 +262,7 @@ namespace Allure.Commons.Helpers
             {
                 uuid = testUuid,
                 name = test.Name,
-                fullName = test.FullName,
+                fullName = testFullNameForLog,
                 labels = new List<Label>
                 {
                     Label.Thread(),
@@ -266,7 +271,7 @@ namespace Allure.Commons.Helpers
                     Label.TestMethod(test.MethodName),
                     Label.Package(test.ClassName)
                 },
-                historyId = test.FullName,
+                historyId = testFullNameForLog,
                 statusDetails = new StatusDetails()
             };
             AllureLifecycle.Instance.StartTestCase(testResult);
