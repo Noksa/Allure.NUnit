@@ -41,6 +41,7 @@ You can also use method `AllureLifecycle.Instance.RunStep` and `AllureLifecycle.
 
 `AllureLifecycle.Instance.Verify` multiple calls example, test collect all errors:<br/><br/>
 ![alt text](https://github.com/Noksa/Allure.NUnit/blob/master/TestsSamples/ScreenshotsReadme/MultiVerifyExample.PNG)
+<br/><br/>
 6) Two new tuning methods:
 `AllureLifecycle.Instance.SetGlobalActionInException (Action action)` and `AllureLifecycle.Instance.SetCurrentTestActionInException (Action action)`<br/>
 You can specify which actions you need to additionally perform if an error occurred in the `RunStep` method or in the checks in the `Verify` class.<br/>
