@@ -16,10 +16,10 @@ Everything else is optional and is not required to enable reporting.
 3) Using `allureConfig.json`, you can add environment variables to the report.
 You can add both constants and system/CI server variables in this way:
 * Constants:<br/> ![alt text](https://github.com/Noksa/Allure.NUnit/blob/master/TestsSamples/ScreenshotsReadme/ConstantsEnvExample.png)<br/>
-* Runtime variables in `environment.runtime` block, syntax: `Namespace.ClassName.MemberName`:<br/> ![alt text](https://github.com/Noksa/Allure.NUnit/blob/master/Allure/ScreenshotsReadme/RuntimeVariablesExample.png)<br/>
+* Runtime variables in `environment.runtime` block, syntax: `Namespace.ClassName.MemberName`:<br/> ![alt text](https://github.com/Noksa/Allure.NUnit/blob/master/TestsSamples/ScreenshotsReadme/RuntimeVariablesExample.png)<br/>
 <br/>__Works with public/internal/private static fields, static properties and with constants.__<br/>
 * System or CI server variables in `environment.runtime` block, syntax `System.Environment.NameOfVariable`:<br/>
-![alt text](https://github.com/Noksa/Allure.NUnit/blob/master/TestsSamples/ScreenshotsReadmee/SystemVariablesExample.png)
+![alt text](https://github.com/Noksa/Allure.NUnit/blob/master/TestsSamples/ScreenshotsReadme/SystemVariablesExample.png)
 
 
 4) New `AllureLifecycle.Instance.Verify` class to add steps without stopping the test, if an exception was thrown or the check failed.
