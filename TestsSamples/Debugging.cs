@@ -83,10 +83,9 @@ namespace TestsSamples
         }
 
         [TestCase("login1", "password1")]
-        [AllureRemoveParams(2)]
-        public void LoginToApp(string login1, string password)
+        public void LoginToApp(string login, string password)
         {
-            // code here
+            AllureLifecycle.Instance.Verify.That("This is parametrized step", 5, Is.GreaterThan(2), login, password);
         }
     }
 }
