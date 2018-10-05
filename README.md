@@ -1,4 +1,4 @@
-# C# Allure with many new features
+# C# Allure with new features
 [![nuget](http://flauschig.ch/nubadge.php?id=Noksa.NUnit.Allure)](https://www.nuget.org/packages/Noksa.NUnit.Allure/)
 
 ## How to use
