@@ -11,7 +11,7 @@
     <Copyright>Noksa (Alexandr Danilin)</Copyright>
     <Company>Noksa (Alexandr Danilin)</Company>
     <PackageTags>allure</PackageTags>
-    <PackageReleaseNotes>Refactoring</PackageReleaseNotes>
+    <PackageReleaseNotes>Refactoring. Added wiki and description to github repository</PackageReleaseNotes>
     <NeutralLanguage>en</NeutralLanguage>
     <RepositoryUrl>https://github.com/Noksa/Allure.NUnit</RepositoryUrl>
     <PackageProjectUrl>https://github.com/Noksa/Allure.NUnit</PackageProjectUrl>
