@@ -4,6 +4,7 @@
 ## How to use
 
 Just inherit your base class or test class from `[AllureReport]`<br/>
-Everything else is optional and is not required to enable reporting.
+Everything else is optional and is not required to enable reporting.<br/>
+To create steps use [Verify](https://github.com/Noksa/Allure.NUnit/wiki/AllureLifycycle.instance.Verify-class) or [RunStep](https://github.com/Noksa/Allure.NUnit/wiki/AllureLifecycle.instance.RunStep-method).
 
 #### More information can be found in the [wiki](https://github.com/Noksa/Allure.NUnit/wiki)
