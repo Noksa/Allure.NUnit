@@ -86,7 +86,7 @@ namespace Allure.Commons.Storage
         {
             var methodInfo = BeforeAfterFixturesHelper.GetTypeOfCurrentMethodInTest();
             var currentTestOrSuite = TestExecutionContext.CurrentContext.CurrentTest;
-            if (AllureLifecycle.Instance.Config.Allure.DebugMode && methodInfo.Keys.First().ToString() != "TestBody")
+            if (AllureLifecycle.Instance.Config.Allure.DebugMode)
                 Logger.LogInProgress($"Thread \"{Thread.CurrentThread.ManagedThreadId}\" => Current allure step method type is \"{methodInfo.Keys.First()}\", method name: \"{methodInfo.Values.First()}\"");
 
             if (methodInfo.Keys.First() == BeforeAfterFixturesHelper.MethodType.OneTimeSetup)
