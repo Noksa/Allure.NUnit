@@ -39,7 +39,7 @@ You can also use method `AllureLifecycle.Instance.RunStep` and `AllureLifecycle.
 ![alt text](https://github.com/Noksa/Allure.NUnit/blob/master/Allure/ScreenshotsReadme/VerifyStepExample.PNG)<br/>
 <br/><br/>
 
-`AllureLifecycle.Instance.Verify` multiple calls, test collect all errors:<br/><br/>
+`AllureLifecycle.Instance.Verify` multiple calls example, test collect all errors:<br/><br/>
 ![alt text](https://github.com/Noksa/Allure.NUnit/blob/master/Allure/ScreenshotsReadme/MultiVerifyExample.PNG)
 6) Two new tuning methods:
 `AllureLifecycle.Instance.SetGlobalActionInException (Action action)` and `AllureLifecycle.Instance.SetCurrentTestActionInException (Action action)`<br/>
