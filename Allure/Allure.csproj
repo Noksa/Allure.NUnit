@@ -4,14 +4,14 @@
     <TargetFrameworks>netstandard2.0;net45;net451;net452;net46;net461;net462;net47;net471</TargetFrameworks>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>Noksa.NUnit.Allure</PackageId>
-    <Version>2.4.0.5-beta</Version>
+    <Version>2.5</Version>
     <Authors>Noksa (Alexandr Danilin)</Authors>
     <Product>Noksa (Alexandr Danilin)</Product>
     <Description>Allure with improvements</Description>
     <Copyright>Noksa (Alexandr Danilin)</Copyright>
     <Company>Noksa (Alexandr Danilin)</Company>
     <PackageTags>allure</PackageTags>
-    <PackageReleaseNotes>Added new functionality - added environment variables to config</PackageReleaseNotes>
+    <PackageReleaseNotes>Refactoring</PackageReleaseNotes>
     <NeutralLanguage>en</NeutralLanguage>
     <RepositoryUrl>https://github.com/Noksa/Allure.NUnit</RepositoryUrl>
     <PackageProjectUrl>https://github.com/Noksa/Allure.NUnit</PackageProjectUrl>
