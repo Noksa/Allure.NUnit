@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using NUnit.Framework;
 
 namespace Allure.Commons.Helpers
@@ -12,8 +13,21 @@ namespace Allure.Commons.Helpers
         internal static Dictionary<MethodType, string> GetTypeOfCurrentMethodInTest()
         {
             var dict = new Dictionary<MethodType, string>();
-            var stackTrace = new StackTrace();
+            var stackTrace = new StackTrace(1);
             var frames = stackTrace.GetFrames();
+            //if (AllureLifecycle.Instance.Config.Allure.DebugMode)
+            //{
+            //    if (frames != null)
+            //    {
+            //        var sb = new StringBuilder();
+            //        foreach (var stackFrame in frames)
+            //        {
+            //            sb.AppendLine($"{stackFrame}");
+            //        }
+            //        Logger.LogInProgress($"Current Allure step frames:\n {sb}");
+            //        sb.Clear();
+            //    }
+            //}
             var frame = frames?.FirstOrDefault(w =>
             {
                 try
