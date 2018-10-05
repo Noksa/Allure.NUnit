@@ -5,4 +5,4 @@
 
 How to use can be found [here](https://github.com/Noksa/Allure.NUnit/wiki/How-to-use).
 
-#### More information can be found in the [wiki](https://github.com/Noksa/Allure.NUnit/wiki)
+#### More information can be found in the [wiki](https://github.com/Noksa/Allure.NUnit/wiki).
