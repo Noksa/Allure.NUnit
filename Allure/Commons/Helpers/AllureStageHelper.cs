@@ -12,9 +12,8 @@ namespace Allure.Commons.Helpers
 {
     internal static class AllureStageHelper
     {
-        internal static Dictionary<MethodType, string> GetCurrentAllureStageInfo()
+        internal static (MethodType Stage, string MethodName) GetCurrentAllureStageInfo()
         {
-            var dict = new Dictionary<MethodType, string>();
             var methods = GetCallStackMethods().ToList();
             if (AllureLifecycle.Instance.Config.Allure.DebugMode)
             {
@@ -46,8 +45,7 @@ namespace Allure.Commons.Helpers
             });
             if (method == null)
             {
-                dict.Add(MethodType.TestBody, "");
-                return dict;
+                return (MethodType.TestBody, "");
             }
 
             var methodName = method.Name;
@@ -69,8 +67,7 @@ namespace Allure.Commons.Helpers
                         methodType = MethodType.OneTimeTearDown;
                         break;
                 }
-            dict.Add(methodType, methodName);
-            return dict;
+            return (methodType, methodName);
         }
 
         private static IEnumerable<MethodBase> GetCallStackMethods()

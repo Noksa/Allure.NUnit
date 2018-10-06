@@ -5,7 +5,6 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using Allure.Commons.Model;
-using Allure.Commons.Storage;
 using Allure.NUnit.Attributes;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
@@ -317,7 +316,7 @@ namespace Allure.Commons.Helpers
         internal static void AddIgnoredTestsToReport(ITest suite)
         {
             var ignoredTests = new Dictionary<ITest, string>();
-            AllureStorage.MainThreadId = Thread.CurrentThread.ManagedThreadId;
+            StepsWorker.MainThreadId = Thread.CurrentThread.ManagedThreadId;
 
             bool IsIgnored(ITest oTest)
             {
@@ -338,7 +337,7 @@ namespace Allure.Commons.Helpers
                             ignoredTests.Add(localTest, localTest.GetPropAsString(PropertyNames.SkipReason));
             }
 
-            suite.SetProp(AllureConstants.IgnoredTests, ignoredTests);
+            suite.SetProp(AllureConstants.FixtureIgnoredTests, ignoredTests);
             FailIgnoredTests(ignoredTests, suite);
         }
 
@@ -355,8 +354,8 @@ namespace Allure.Commons.Helpers
                     var testResult = new TestContext.ResultAdapter(new TestCaseResult(new TestMethod(pair.Key.Method)));
                     AddInfoToIgnoredTest(ref testResult);
                     pair.Key.SetProp(AllureConstants.TestResult, testResult);
-                    AllureLifecycle.Instance.Storage.ClearStepContext();
-                    AllureLifecycle.Instance.Storage.CurrentThreadStepContext.AddLast(
+                    AllureLifecycle.Instance.StepsWorker.ClearStepContext();
+                    AllureLifecycle.Instance.StepsWorker.CurrentThreadStepContext.AddLast(
                         pair.Key.GetPropAsString(AllureConstants.TestUuid));
                     AllureLifecycle.Instance.StartStepAndStopIt(null, $"Test was ignored by reason: {pair.Value}",
                         Status.skipped);

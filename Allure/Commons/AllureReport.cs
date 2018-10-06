@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading;
 using Allure.Commons.Helpers;
 using Allure.Commons.Model;
-using Allure.Commons.Storage;
 using Allure.NUnit.Attributes;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
@@ -32,14 +31,14 @@ namespace Allure.Commons
                 .SetProp(AllureConstants.TestUuid,
                     testUuids.TestUuid);
             TestExecutionContext.CurrentContext.CurrentResult.SetResult(ResultState.Success);
-            AllureStorage.MainThreadId = Thread.CurrentThread.ManagedThreadId;
+            StepsWorker.MainThreadId = Thread.CurrentThread.ManagedThreadId;
             AllureLifecycle.CurrentTestActionsInException = null;
             currentTest.SetCurrentTestSetupFixture(new FixtureResult {suiteUuid = "null"});
             currentTest.SetCurrentTestTearDownFixture(new FixtureResult {suiteUuid = "null"});
-            AllureLifecycle.Instance.Storage.ClearStepContext();
-            AllureLifecycle.Instance.Storage.CurrentThreadStepContext.AddLast(testUuids.TestUuid);
-            AllureStorage.TempContext =
-                new LinkedList<string>(AllureLifecycle.Instance.Storage.CurrentThreadStepContext.ToList());
+            AllureLifecycle.Instance.StepsWorker.ClearStepContext();
+            AllureLifecycle.Instance.StepsWorker.CurrentThreadStepContext.AddLast(testUuids.TestUuid);
+            StepsWorker.TempContext =
+                new LinkedList<string>(AllureLifecycle.Instance.StepsWorker.CurrentThreadStepContext.ToList());
 
             AllureLifecycle.Instance.UpdateTestContainer(
                 testUuids.ContainerUuid,
@@ -64,8 +63,8 @@ namespace Allure.Commons
                 {
                     AllureLifecycle.Instance.StopFixture(q =>
                         q.status = ReportHelper.GetNUnitStatus(TestContext.CurrentContext.Result.Outcome.Status));
-                    AllureLifecycle.Instance.Storage.CurrentThreadStepContext =
-                        new LinkedList<string>(AllureStorage.TempContext);
+                    AllureLifecycle.Instance.StepsWorker.CurrentThreadStepContext =
+                        new LinkedList<string>(StepsWorker.TempContext);
                 }
 
                 var testresult = TestContext.CurrentContext.Result;
@@ -89,7 +88,7 @@ namespace Allure.Commons
         [OneTimeSetUp]
         public void AllureOneTimeSetUp()
         {
-            AllureStorage.MainThreadId = Thread.CurrentThread.ManagedThreadId;
+            StepsWorker.MainThreadId = Thread.CurrentThread.ManagedThreadId;
             _currentSuite = (TestFixture) TestExecutionContext.CurrentContext.CurrentTest;
             OutLogger.LogInProgress(
                 $"Entering OneTimeSetup for \"{_currentSuite.GetProp(AllureConstants.FixtureUuid)}\"");
@@ -131,8 +130,8 @@ namespace Allure.Commons
 
             foreach (var testTupleInfo in _currentSuite.GetCompletedTestsInFixture())
             {
-                AllureLifecycle.Instance.Storage.ClearStepContext();
-                AllureLifecycle.Instance.Storage.CurrentThreadStepContext.AddLast(testTupleInfo.TestUuid);
+                AllureLifecycle.Instance.StepsWorker.ClearStepContext();
+                AllureLifecycle.Instance.StepsWorker.CurrentThreadStepContext.AddLast(testTupleInfo.TestUuid);
                 ReportHelper.StopAllureLogging(testTupleInfo.testResult,
                     testTupleInfo.TestUuid, testTupleInfo.TestContainerUuid, _currentSuite, false, null);
             }
@@ -143,7 +142,7 @@ namespace Allure.Commons
                 TestContext.CurrentContext.Result.Outcome.Status == TestStatus.Failed)
                 lock (ReportHelper.Locker)
                 {
-                    AllureStorage.MainThreadId = Thread.CurrentThread.ManagedThreadId;
+                    StepsWorker.MainThreadId = Thread.CurrentThread.ManagedThreadId;
                     foreach (var test in _currentSuiteTests)
                     {
                         test.SetProp(AllureConstants.TestResult, TestContext.CurrentContext.Result);
@@ -154,8 +153,8 @@ namespace Allure.Commons
                         AllureLifecycle.Instance.UpdateTestCase(test.GetPropAsString(AllureConstants.TestUuid),
                             x => { x.start = AllureLifecycle.ToUnixTimestamp(); });
                         Thread.Sleep(5);
-                        AllureLifecycle.Instance.Storage.ClearStepContext();
-                        AllureLifecycle.Instance.Storage.CurrentThreadStepContext.AddLast(
+                        AllureLifecycle.Instance.StepsWorker.ClearStepContext();
+                        AllureLifecycle.Instance.StepsWorker.CurrentThreadStepContext.AddLast(
                             test.GetPropAsString(AllureConstants.TestUuid));
                         AllureLifecycle.Instance.StartStepAndStopIt(null, "The test was not started",
                             Status.failed);

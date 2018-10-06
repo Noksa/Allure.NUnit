@@ -164,7 +164,7 @@ namespace Allure.Commons.Helpers
         internal static FixtureResult GetCurrentTestSetupFixture(this ITest iTest)
         {
             if (iTest.IsSuite)
-                if (iTest.GetProp(AllureConstants.IgnoredTests) != null)
+                if (iTest.GetProp(AllureConstants.FixtureIgnoredTests) != null)
                     return null;
             var fixture = iTest.GetProp(AllureConstants.CurrentTestSetupFixture) as FixtureResult;
             if (fixture == null) return null;
@@ -194,5 +194,54 @@ namespace Allure.Commons.Helpers
             iTest.SetProp(AllureConstants.CurrentTestTearDownFixture, ft);
             return iTest;
         }
+
+        #region Fixture Storage
+
+        internal static StorageWorker Storage(this ITest iTest)
+        {
+            var fixture = GetTestFixture(iTest);
+            return new StorageWorker(fixture);
+        }
+
+        internal class StorageWorker
+        {
+            private readonly ITest _fixture;
+
+            internal StorageWorker(ITest fixture)
+            {
+                _fixture = fixture;
+            }
+
+            internal StorageWorker Put<T>(string uuid, T obj)
+            {
+                Storage.GetOrAdd(uuid, obj);
+                return this;
+            }
+
+            internal T Get<T>(string uuid)
+            {
+                try
+                {
+                    return (T)Storage[uuid];
+                }
+                catch (KeyNotFoundException e)
+                {
+                    var msg = $"{e.Message} \nTried to find the key: {uuid}";
+                    var newEx = new KeyNotFoundException(msg);
+                    throw newEx;
+                }
+            }
+
+            internal T Remove<T>(string uuid)
+            {
+                Storage.TryRemove(uuid, out var obj);
+                return (T) obj;
+            }
+
+            private ConcurrentDictionary<string, object> Storage =>
+                _fixture.GetProp(AllureConstants.FixtureStorage) as ConcurrentDictionary<string, object>;
+        }
+
+        #endregion
     }
 }

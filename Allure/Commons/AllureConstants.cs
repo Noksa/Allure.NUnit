@@ -32,7 +32,8 @@
         internal const string OneTimeSetupFixture = "OneTimeSetupFixtureProp";
         internal const string CurrentTestSetupFixture = "CurrentTestSetupFixtureProp";
         internal const string CurrentTestTearDownFixture = "CurrentTestTearDownFixtureProp";
-        internal const string IgnoredTests = "IgnoredTestsProp";
+        internal const string FixtureIgnoredTests = "IgnoredTestsProp";
+        internal const string FixtureStorage = "FixtureStorageProp";
 
         #endregion
     }

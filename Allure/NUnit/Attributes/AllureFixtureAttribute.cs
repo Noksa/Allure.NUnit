@@ -5,7 +5,6 @@ using System.Linq;
 using System.Threading;
 using Allure.Commons;
 using Allure.Commons.Helpers;
-using Allure.Commons.Storage;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
 using NUnit.Framework.Internal;
@@ -28,7 +27,7 @@ namespace Allure.NUnit.Attributes
         {
             lock (Locker)
             {
-                AllureStorage.MainThreadId = Thread.CurrentThread.ManagedThreadId;
+                StepsWorker.MainThreadId = Thread.CurrentThread.ManagedThreadId;
                 var suite = (TestFixture) context.CurrentTest;
                 var tests = ReportHelper.GetAllTestsInSuite(suite);
                 context.CurrentTest.SetProp(AllureConstants.FixtureUuid, $"{suite.FullName}-fixture")
@@ -37,7 +36,8 @@ namespace Allure.NUnit.Attributes
                     .SetProp(AllureConstants.CompletedTestsInFixture,
                         new ConcurrentBag<(TestContext.ResultAdapter, string, string, string)>())
                     .SetProp(AllureConstants.RunsCountTests,
-                        new List<(string, string, string)>());
+                        new List<(string, string, string)>())
+                    .SetProp(AllureConstants.FixtureStorage, new ConcurrentDictionary<string, object>());
                 foreach (var nestedTest in tests)
                 {
                     var countRun = 1;

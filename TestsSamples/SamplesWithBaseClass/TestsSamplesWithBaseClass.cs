@@ -8,6 +8,7 @@ namespace TestsSamples.SamplesWithBaseClass
     public class TestsSamplesWithBaseClass : TestsBaseClass
     {
         [Test]
+        [Repeat(5)]
         public void JustTest()
         {
             var arg1 = 3;
