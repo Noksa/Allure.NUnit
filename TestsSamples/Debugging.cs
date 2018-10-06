@@ -1,4 +1,6 @@
-﻿using Allure.Commons;
+﻿using System.Threading;
+using System.Threading.Tasks;
+using Allure.Commons;
 using Allure.NUnit.Attributes;
 using NUnit.Framework;
 
@@ -6,86 +8,36 @@ namespace TestsSamples
 {
     [Parallelizable(ParallelScope.All)]
     [AllureSuite("This is debug suite")]
-    [TestFixture("Arg1")]
-    [TestFixture("Arg1", "Arg2")]
-    [TestFixture(1, 2.4, "FAFAFA")]
     public class Debugging : AllureReport
     {
-        [SetUp]
-        public void CurrentTestSetup()
+        [TestCase(TestName = "Debug tests")]
+        public void DebuggingTests()
         {
-            AllureLifecycle.Instance.RunStep($"This is setup step in test {TestContext.CurrentContext.Test.FullName}",
-                () => { });
+            var task = Task.Run(() =>
+            {
+                LogThreadAndTestId();
+            });
+            var task2 = Task.Run(() =>
+            {
+                LogThreadAndTestId();
+            });
+            var task3 = Task.Run(() =>
+            {
+                LogThreadAndTestId();
+            });
+            
         }
 
-        [TearDown]
-        public void CurrentTestTearDown()
+        private void LogThreadAndTestId()
         {
-            AllureLifecycle.Instance.RunStep(
-                $"This is teardown step in test {TestContext.CurrentContext.Test.FullName}", () => { });
-        }
-
-        public Debugging()
-        {
-        }
-
-        public Debugging(object arg1)
-        {
-            fixtureArg = arg1;
-        }
-
-        public Debugging(object arg1, object arg2)
-        {
-            fixtureArg = $"{arg1} {arg2}";
-        }
-
-        public Debugging(object arg1, object arg2, object arg3)
-        {
-            fixtureArg = $"{arg1} {arg2} {arg3}";
-        }
-
-        private object fixtureArg;
-
-        [OneTimeSetUp]
-        public void OneTimeSetup()
-        {
-            AllureLifecycle.Instance.RunStep(
-                $"This is onetimesetup step of fixture {TestContext.CurrentContext.Test.FullName}", () => { });
-        }
-
-        [OneTimeTearDown]
-        public void OneTimeTearDown()
-        {
-            AllureLifecycle.Instance.RunStep(
-                $"This is onetimeteardown step of fixture {TestContext.CurrentContext.Test.FullName}", () => { });
-        }
-
-        [TestCase(TestName = "Debug testing")]
-        [Repeat(5)]
-        public void Debug()
-        {
-            AllureLifecycle.Instance.RunStep("This is step in debugging test", () => { });
-        }
-
-        [TestCase(TestName = "Ignore testing")]
-        [Ignore("Ignored test")]
-        public void IgnoredTest()
-        {
-            AllureLifecycle.Instance.RunStep("This is step in ignored test", () => { });
-        }
-
-        [TestCase(TestName = "Retry testing")]
-        [Retry(5)]
-        public void RetryingTest()
-        {
-            AllureLifecycle.Instance.RunStep("This is step in retry test", () => { });
-            Assert.Fail($"This is retry fail {TestContext.CurrentContext.Random.Next(1, 5000)}");
-        }
-
-        [TestCase("login1", "password1")]
-        public void LoginToApp(string login, string password)
-        {
-            AllureLifecycle.Instance.Verify.That("This is parametrized step", 5, Is.GreaterThan(2), login, password);
+            var attempt = 1;
+            do
+            {
+                TestContext.Progress.WriteLine($"Thread id \"{Thread.CurrentThread.ManagedThreadId}\", Test Id: {TestContext.CurrentContext.Test.ID}");
+                Thread.Sleep(500);
+                attempt++;
+            } while (attempt < 5);
+            
         }
     }
 }

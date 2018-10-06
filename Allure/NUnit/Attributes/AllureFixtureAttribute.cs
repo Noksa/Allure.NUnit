@@ -74,7 +74,7 @@ namespace Allure.NUnit.Attributes
         }
 
 
-        internal static void StartTestAndAddPropertiesInside(ITest test, TestFixture suite, int countRun)
+        private static void StartTestAndAddPropertiesInside(ITest test, TestFixture suite, int countRun)
         {
             var uuid = $"{test.Id}_{Guid.NewGuid():N}";
             var testUuid = $"{uuid}-{suite.Id}-test-run{countRun}";
