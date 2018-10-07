@@ -39,7 +39,7 @@ namespace Allure.Commons.Helpers
             return list;
         }
 
-        internal static void AddToTestCaseParametersInfo(ITest test, string testUuid, int[] hideParams,
+        private static void AddToTestCaseParametersInfo(ITest test, string testUuid, int[] hideParams,
             int[] removeParams)
         {
             if (AllureLifecycle.Instance.Config.Allure.EnableParameters)
@@ -61,7 +61,7 @@ namespace Allure.Commons.Helpers
             }
         }
 
-        internal static string GenerateFullNameWithParameters(ITest iTest, string suiteNameFromAttr)
+        private static string GenerateFullNameWithParameters(ITest iTest, string suiteNameFromAttr)
         {
             if (iTest.IsSuite)
                 if (!AllureLifecycle.Instance.Config.Allure.EnableParameters)
@@ -103,7 +103,7 @@ namespace Allure.Commons.Helpers
         }
 
 
-        internal static void AddInfoInTestCase(ITest test, string testUuid, ITest suite)
+        private static void AddInfoInTestCase(ITest test, string testUuid, ITest suite)
         {
             var testMethod = test.Method.MethodInfo;
             if (testMethod.DeclaringType != null)
@@ -129,7 +129,7 @@ namespace Allure.Commons.Helpers
                 });
         }
 
-        internal static void AddInfoToTestCaseFromAttributes(ITest test, string testUuid, ITest suite,
+        private static void AddInfoToTestCaseFromAttributes(ITest test, string testUuid, ITest suite,
             IEnumerable<Attribute> attrs,
             bool testMethodAttrs)
         {

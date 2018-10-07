@@ -1,6 +1,6 @@
 ﻿namespace Allure.Commons
 {
-    public sealed class AllureConstants
+    public static class AllureConstants
     {
         #region Public
 

@@ -16,9 +16,7 @@ namespace Allure.Commons.Helpers
 
         private readonly ThreadLocal<LinkedList<string>> _currentThreadStepContext =
             new ThreadLocal<LinkedList<string>>(true);
-
-        private readonly ConcurrentDictionary<string, object> _storage = new ConcurrentDictionary<string, object>();
-
+        
         [field: ThreadStatic] internal static int MainThreadId { get; set; }
 
         internal static bool IsMainThread => Thread.CurrentThread.ManagedThreadId == MainThreadId;
@@ -73,9 +71,9 @@ namespace Allure.Commons.Helpers
                 if (oneTimeSetUpFixture == null)
                 {
                     oneTimeSetUpFixture = new FixtureResult { name = stageInfo.MethodName };
-                    foreach (var (_, TestContainerUuid, FixtureUuid) in currentTestOrSuite.GetAllTestsInFixture())
-                        AllureLifecycle.Instance.StartBeforeFixture(TestContainerUuid,
-                            $"{FixtureUuid}-onetimesetup",
+                    foreach (var (_, testContainerUuid, fixtureUuid) in currentTestOrSuite.GetAllTestsInFixture())
+                        AllureLifecycle.Instance.StartBeforeFixture(testContainerUuid,
+                            $"{fixtureUuid}-onetimesetup",
                             oneTimeSetUpFixture);
                     oneTimeSetUpFixture.suiteUuid =
                         currentTestOrSuite.GetPropAsString(AllureConstants.FixtureUuid);
@@ -89,7 +87,7 @@ namespace Allure.Commons.Helpers
                     var otsf = currentTestOrSuite.GetCurrentOneTimeSetupFixture();
                     if (otsf != null)
                     {
-                        TempContext = new LinkedList<string>(Enumerable.ToList<string>(CurrentThreadStepContext));
+                        TempContext = new LinkedList<string>(CurrentThreadStepContext.ToList());
                         AllureLifecycle.Instance.StopFixture(otsf.suiteUuid + "-onetimesetup",
                             q => q.status =
                                 ReportHelper.GetNUnitStatus(TestContext.CurrentContext.Result.Outcome.Status));
@@ -140,7 +138,7 @@ namespace Allure.Commons.Helpers
                         CurrentThreadStepContext = TempContext;
                     }
 
-                    TempContext = new LinkedList<string>(Enumerable.ToList<string>(CurrentThreadStepContext));
+                    TempContext = new LinkedList<string>(CurrentThreadStepContext.ToList());
 
                     var fixture = new FixtureResult { name = stageInfo.MethodName };
                     AllureLifecycle.Instance.StartAfterFixture(
@@ -155,9 +153,9 @@ namespace Allure.Commons.Helpers
                 {
                     TempContext = new LinkedList<string>(CurrentThreadStepContext);
                     var oneTimeTearDownFixture = new FixtureResult { name = stageInfo.MethodName };
-                    foreach (var (_, TestContainerUuid, FixtureUuid) in currentTestOrSuite.GetAllTestsInFixture())
-                        AllureLifecycle.Instance.StartAfterFixture(TestContainerUuid,
-                            $"{FixtureUuid}-onetimeteardown",
+                    foreach (var (_, testContainerUuid, fixtureUuid) in currentTestOrSuite.GetAllTestsInFixture())
+                        AllureLifecycle.Instance.StartAfterFixture(testContainerUuid,
+                            $"{fixtureUuid}-onetimeteardown",
                             oneTimeTearDownFixture);
                     oneTimeTearDownFixture.suiteUuid = currentTestOrSuite.GetPropAsString(AllureConstants.FixtureUuid);
                     currentTestOrSuite.SetCurrentOneTimeTearDownFixture(oneTimeTearDownFixture);
