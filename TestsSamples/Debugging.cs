@@ -10,7 +10,14 @@ namespace TestsSamples
     [AllureSuite("This is debug suite")]
     public class Debugging : AllureReport
     {
+        [OneTimeSetUp]
+        public void TestOneTime()
+        {
+            AllureLifecycle.Instance.Verify.Pass("OneTimeSetup step");
+        }
+
         [TestCase(TestName = "Debug tests")]
+        [Repeat(5)]
         public void DebuggingTests()
         {
             var task = Task.Run(() =>
@@ -25,7 +32,9 @@ namespace TestsSamples
             {
                 LogThreadAndTestId();
             });
-            
+
+            AllureLifecycle.Instance.Verify.Pass("Test Body step");
+
         }
 
         private void LogThreadAndTestId()

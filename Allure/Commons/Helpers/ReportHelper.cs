@@ -354,8 +354,8 @@ namespace Allure.Commons.Helpers
                     var testResult = new TestContext.ResultAdapter(new TestCaseResult(new TestMethod(pair.Key.Method)));
                     AddInfoToIgnoredTest(ref testResult);
                     pair.Key.SetProp(AllureConstants.TestResult, testResult);
-                    AllureLifecycle.Instance.StepsWorker.ClearStepContext();
-                    AllureLifecycle.Instance.StepsWorker.CurrentThreadStepContext.AddLast(
+                    //AllureLifecycle.Instance.StepsWorker.ClearStepContext();
+                    AllureLifecycle.Instance.StepsWorker.GetCurrentStepContext(pair.Key).AddLast(
                         pair.Key.GetPropAsString(AllureConstants.TestUuid));
                     AllureLifecycle.Instance.StartStepAndStopIt(null, $"Test was ignored by reason: {pair.Value}",
                         Status.skipped);

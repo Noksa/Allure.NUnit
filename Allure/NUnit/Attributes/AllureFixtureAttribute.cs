@@ -34,9 +34,9 @@ namespace Allure.NUnit.Attributes
                     .SetProp(AllureConstants.AllTestsInFixture,
                         new ConcurrentBag<(string, string, string)>())
                     .SetProp(AllureConstants.CompletedTestsInFixture,
-                        new ConcurrentBag<(TestContext.ResultAdapter, string, string, string)>())
+                        new ConcurrentBag<(TestContext.ResultAdapter, string, string, string, ITest)>())
                     .SetProp(AllureConstants.RunsCountTests,
-                        new List<(string, string, string)>())
+                        new List<(string, string)>())
                     .SetProp(AllureConstants.FixtureStorage, new ConcurrentDictionary<string, object>());
                 foreach (var nestedTest in tests)
                 {
@@ -84,7 +84,8 @@ namespace Allure.NUnit.Attributes
             test.SetProp(AllureConstants.TestContainerUuid, containerUuid)
                 .SetProp(AllureConstants.TestUuid, testUuid)
                 .SetProp(AllureConstants.FixtureUuid, fixtureUuid)
-                .SetProp(AllureConstants.TestAsserts, new List<Exception>());
+                .SetProp(AllureConstants.TestAsserts, new List<Exception>())
+                .SetProp(AllureConstants.TestBodyContext, new LinkedList<string>());
             ReportHelper.StartAllureLogging(test, testUuid, containerUuid, suite);
             OutLogger.LogInProgress(
                 $"Started allure logging for \"{test.FullName}\", run #{countRun}\n\"{testUuid}\"\n\"{containerUuid}\"\n\"{fixtureUuid}\"");
@@ -92,7 +93,7 @@ namespace Allure.NUnit.Attributes
             suite.GetAllTestsInFixture()
                 .Add((testUuid, containerUuid, fixtureUuid));
             suite.GetCountTestInFixture()
-                .Add((testUuid, containerUuid, fixtureUuid));
+                .Add((testUuid, containerUuid));
         }
     }
 }

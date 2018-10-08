@@ -143,7 +143,7 @@ namespace Allure.Commons
 
         public AllureLifecycle UpdateFixture(Action<FixtureResult> update)
         {
-            UpdateFixture(StepsWorker.RootStep, update);
+            UpdateFixture(StepsWorker.GetRootStep(TestExecutionContext.CurrentContext.CurrentTest), update);
             return this;
         }
 
@@ -157,14 +157,14 @@ namespace Allure.Commons
         public AllureLifecycle StopFixture(Action<FixtureResult> beforeStop)
         {
             UpdateFixture(beforeStop);
-            return StopFixture(StepsWorker.RootStep);
+            return StopFixture(StepsWorker.GetRootStep(TestExecutionContext.CurrentContext.CurrentTest));
         }
 
         public AllureLifecycle StopFixture(string uuid)
         {
             var fixture = 
             TestExecutionContext.CurrentContext.CurrentTest.Storage().Remove<FixtureResult>(uuid);
-            StepsWorker.ClearStepContext();
+            //StepsWorker.ClearStepContext();
             fixture.stage = Stage.finished;
             fixture.stop = ToUnixTimestamp();
             return this;
@@ -175,7 +175,7 @@ namespace Allure.Commons
             UpdateFixture(uuid, beforeStop);
             var fixture = 
             TestExecutionContext.CurrentContext.CurrentTest.Storage().Remove<FixtureResult>(uuid);
-            StepsWorker.ClearStepContext();
+            //StepsWorker.ClearStepContext();
             fixture.stage = Stage.finished;
             fixture.stop = ToUnixTimestamp();
             return this;
@@ -196,7 +196,7 @@ namespace Allure.Commons
             testResult.stage = Stage.running;
             testResult.start = ToUnixTimestamp();
             TestExecutionContext.CurrentContext.CurrentTest.Storage().Put(testResult.uuid, testResult);
-            StepsWorker.StartStep(testResult.uuid);
+            //StepsWorker.StartStep(testResult.uuid);
             return this;
         }
 
@@ -224,7 +224,7 @@ namespace Allure.Commons
             var testResult = TestExecutionContext.CurrentContext.CurrentTest.Storage().Get<TestResult>(uuid);
             testResult.stage = Stage.finished;
             if (updateStopTime) testResult.stop = ToUnixTimestamp();
-            StepsWorker.ClearStepContext();
+            //StepsWorker.ClearStepContext();
             return this;
         }
 
@@ -461,7 +461,7 @@ namespace Allure.Commons
         {
             stepResult.stage = Stage.running;
             stepResult.start = ToUnixTimestamp();
-            StepsWorker.StartStep(uuid);
+            StepsWorker.StartStep(TestExecutionContext.CurrentContext.CurrentTest, uuid);
             StepsWorker.AddSubStep(parentUuid, uuid, stepResult);
             return this;
         }
@@ -489,7 +489,7 @@ namespace Allure.Commons
             var step = TestExecutionContext.CurrentContext.CurrentTest.Storage().Remove<StepResult>(uuid);
             step.stage = Stage.finished;
             step.stop = ToUnixTimestamp();
-            StepsWorker.StopStep();
+            StepsWorker.StopStep(TestExecutionContext.CurrentContext.CurrentTest);
             return this;
         }
 
@@ -688,8 +688,8 @@ namespace Allure.Commons
             TestExecutionContext.CurrentContext.CurrentTest.Storage().Put(uuid, fixtureResult);
             fixtureResult.stage = Stage.running;
             fixtureResult.start = ToUnixTimestamp();
-            StepsWorker.ClearStepContext();
-            StepsWorker.StartStep(uuid);
+            //StepsWorker.ClearStepContext();
+            StepsWorker.StartStep(TestExecutionContext.CurrentContext.CurrentTest, uuid);
         }
 
         internal string GetDirectoryWithResults(string outDir)

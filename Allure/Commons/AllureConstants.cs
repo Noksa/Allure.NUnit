@@ -34,6 +34,11 @@
         internal const string CurrentTestTearDownFixture = "CurrentTestTearDownFixtureProp";
         internal const string FixtureIgnoredTests = "IgnoredTestsProp";
         internal const string FixtureStorage = "FixtureStorageProp";
+        internal const string OneTimeSetupContext = "FixtureOneTimeSetupStepContextProp";
+        internal const string OneTimeTearDownContext = "FixtureOneTimeTearDownStepContextProp";
+        internal const string TestBodyContext = "TestBodyStepContextProp";
+        internal const string TestSetupContext = "TestSetupStepContextProp";
+        internal const string TestTearDownContext = "TestTearDownStepContextProp";
 
         #endregion
     }

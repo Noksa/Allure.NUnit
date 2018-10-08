@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using Allure.Commons.Helpers;
 using Allure.Commons.Model;
@@ -23,27 +22,27 @@ namespace Allure.Commons
         [SetUp]
         protected void StartAllureLogging()
         {
-            // For started tests renew info in props
-            var testUuids = TestExecutionContext.CurrentContext.CurrentTest.GetCurrentTestRunInfo();
-            var currentTest = TestExecutionContext.CurrentContext.CurrentTest;
-            currentTest.SetProp(AllureConstants.TestContainerUuid,
-                    testUuids.ContainerUuid)
-                .SetProp(AllureConstants.TestUuid,
-                    testUuids.TestUuid);
             TestExecutionContext.CurrentContext.CurrentResult.SetResult(ResultState.Success);
             StepsWorker.MainThreadId = Thread.CurrentThread.ManagedThreadId;
             AllureLifecycle.CurrentTestActionsInException = null;
-            currentTest.SetCurrentTestSetupFixture(new FixtureResult {suiteUuid = "null"});
-            currentTest.SetCurrentTestTearDownFixture(new FixtureResult {suiteUuid = "null"});
-            AllureLifecycle.Instance.StepsWorker.ClearStepContext();
-            AllureLifecycle.Instance.StepsWorker.CurrentThreadStepContext.AddLast(testUuids.TestUuid);
-            StepsWorker.TempContext =
-                new LinkedList<string>(AllureLifecycle.Instance.StepsWorker.CurrentThreadStepContext.ToList());
+
+            // For started tests renew info in props
+
+            var (testUuid, containerUuid) = TestExecutionContext.CurrentContext.CurrentTest.GetCurrentTestRunInfo();
+            var currentTest = TestExecutionContext.CurrentContext.CurrentTest;
+            currentTest.SetProp(AllureConstants.TestContainerUuid,
+                    containerUuid)
+                .SetProp(AllureConstants.TestUuid,
+                    testUuid)
+                .SetCurrentTestSetupFixture(new FixtureResult {suiteUuid = "null"})
+                .SetCurrentTestTearDownFixture(new FixtureResult {suiteUuid = "null"})
+                .SetProp(AllureConstants.TestBodyContext, new LinkedList<string>())
+                .GetStepContext(AllureStageHelper.MethodType.TestBody).AddLast(testUuid);
 
             AllureLifecycle.Instance.UpdateTestContainer(
-                testUuids.ContainerUuid,
+                containerUuid,
                 x => x.start = AllureLifecycle.ToUnixTimestamp());
-            AllureLifecycle.Instance.UpdateTestCase(testUuids.TestUuid,
+            AllureLifecycle.Instance.UpdateTestCase(testUuid,
                 x =>
                 {
                     x.start = AllureLifecycle.ToUnixTimestamp();
@@ -63,8 +62,8 @@ namespace Allure.Commons
                 {
                     AllureLifecycle.Instance.StopFixture(q =>
                         q.status = ReportHelper.GetNUnitStatus(TestContext.CurrentContext.Result.Outcome.Status));
-                    AllureLifecycle.Instance.StepsWorker.CurrentThreadStepContext =
-                        new LinkedList<string>(StepsWorker.TempContext);
+                    //AllureLifecycle.Instance.StepsWorker.CurrentStepContext =
+                    //    new LinkedList<string>(StepsWorker.TempContext);
                 }
 
                 var testresult = TestContext.CurrentContext.Result;
@@ -81,7 +80,7 @@ namespace Allure.Commons
                     TestContext.CurrentContext.Result,
                     currentTest.GetPropAsString(AllureConstants.TestUuid),
                     currentTest.GetPropAsString(AllureConstants.TestContainerUuid),
-                    currentTest.GetPropAsString(AllureConstants.FixtureUuid)));
+                    currentTest.GetPropAsString(AllureConstants.FixtureUuid), currentTest));
             }
         }
 
@@ -130,8 +129,7 @@ namespace Allure.Commons
 
             foreach (var testTupleInfo in _currentSuite.GetCompletedTestsInFixture())
             {
-                AllureLifecycle.Instance.StepsWorker.ClearStepContext();
-                AllureLifecycle.Instance.StepsWorker.CurrentThreadStepContext.AddLast(testTupleInfo.TestUuid);
+                //AllureLifecycle.Instance.StepsWorker.CurrentStepContext.AddLast(testTupleInfo.TestUuid);
                 ReportHelper.StopAllureLogging(testTupleInfo.testResult,
                     testTupleInfo.TestUuid, testTupleInfo.TestContainerUuid, _currentSuite, false, null);
             }
@@ -153,8 +151,8 @@ namespace Allure.Commons
                         AllureLifecycle.Instance.UpdateTestCase(test.GetPropAsString(AllureConstants.TestUuid),
                             x => { x.start = AllureLifecycle.ToUnixTimestamp(); });
                         Thread.Sleep(5);
-                        AllureLifecycle.Instance.StepsWorker.ClearStepContext();
-                        AllureLifecycle.Instance.StepsWorker.CurrentThreadStepContext.AddLast(
+                        AllureLifecycle.Instance.StepsWorker.ClearStepContext(test);
+                        AllureLifecycle.Instance.StepsWorker.GetCurrentStepContext(test).AddLast(
                             test.GetPropAsString(AllureConstants.TestUuid));
                         AllureLifecycle.Instance.StartStepAndStopIt(null, "The test was not started",
                             Status.failed);
