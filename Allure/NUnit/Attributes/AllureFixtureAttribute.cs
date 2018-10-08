@@ -85,7 +85,9 @@ namespace Allure.NUnit.Attributes
                 .SetProp(AllureConstants.TestUuid, testUuid)
                 .SetProp(AllureConstants.FixtureUuid, fixtureUuid)
                 .SetProp(AllureConstants.TestAsserts, new List<Exception>())
-                .SetProp(AllureConstants.TestBodyContext, new LinkedList<string>());
+                .SetProp(AllureConstants.TestBodyContext, new ThreadLocal<LinkedList<string>>(true));
+            var bodyContext = test.GetProp(AllureConstants.TestBodyContext) as ThreadLocal<LinkedList<string>>;
+            bodyContext.Value = new LinkedList<string>();
             ReportHelper.StartAllureLogging(test, testUuid, containerUuid, suite);
             OutLogger.LogInProgress(
                 $"Started allure logging for \"{test.FullName}\", run #{countRun}\n\"{testUuid}\"\n\"{containerUuid}\"\n\"{fixtureUuid}\"");

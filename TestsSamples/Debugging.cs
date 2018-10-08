@@ -16,37 +16,59 @@ namespace TestsSamples
             AllureLifecycle.Instance.Verify.Pass("OneTimeSetup step");
         }
 
+        [SetUp]
+        public void SetupTest()
+        {
+            AllureLifecycle.Instance.Verify.Pass("Test setup step");
+        }
+
+        [TearDown]
+        public void TearDownTest()
+        {
+            AllureLifecycle.Instance.Verify.Pass("Test teardown step");
+        }
+
+        [OneTimeTearDown]
+        public void OneTimeTearDowning()
+        {
+
+            AllureLifecycle.Instance.Verify.Pass("Test OneTimeTearDown step");
+        }
+
         [TestCase(TestName = "Debug tests")]
-        [Repeat(5)]
         public void DebuggingTests()
         {
             var task = Task.Run(() =>
             {
-                LogThreadAndTestId();
+                TestDebug();
+                TestDebug();
+                TestDebug();
+                TestDebug();
+                TestDebug();
+                TestDebug();
+                TestDebug();
+                TestDebug();
+                TestDebug();
+                TestDebug();
+                TestDebug();
+                TestDebug();
+                TestDebug();
+                TestDebug();
+                TestDebug();
+                TestDebug();
             });
-            var task2 = Task.Run(() =>
-            {
-                LogThreadAndTestId();
-            });
-            var task3 = Task.Run(() =>
-            {
-                LogThreadAndTestId();
-            });
-
+            task.Wait();
             AllureLifecycle.Instance.Verify.Pass("Test Body step");
 
         }
 
-        private void LogThreadAndTestId()
+        private void TestDebug()
         {
-            var attempt = 1;
-            do
+            AllureLifecycle.Instance.RunStep($"This is step {TestContext.CurrentContext.Random.Next(1, 5000)}", () =>
             {
-                TestContext.Progress.WriteLine($"Thread id \"{Thread.CurrentThread.ManagedThreadId}\", Test Id: {TestContext.CurrentContext.Test.ID}");
-                Thread.Sleep(500);
-                attempt++;
-            } while (attempt < 5);
-            
+                AllureLifecycle.Instance.Verify.Pass("Task step");
+                Thread.Sleep(1000);
+            });
         }
     }
 }

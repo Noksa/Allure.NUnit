@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using Allure.Commons.Model;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
@@ -249,29 +250,52 @@ namespace Allure.Commons.Helpers
         internal static LinkedList<string> GetStepContext(this ITest iTest, AllureStageHelper.MethodType type)
         {
             var fixture = iTest.GetTestFixture();
-            LinkedList<string> context = null;
+            ThreadLocal<LinkedList<string>> context;
             switch (type)
             {
                 case AllureStageHelper.MethodType.Setup:
-                    context = iTest.GetProp(AllureConstants.TestSetupContext) as LinkedList<string>;
+                    context = iTest.GetProp(AllureConstants.TestSetupContext) as ThreadLocal<LinkedList<string>>;
                     break;
                 case AllureStageHelper.MethodType.Teardown:
-                    context = iTest.GetProp(AllureConstants.TestTearDownContext) as LinkedList<string>;
+                    context = iTest.GetProp(AllureConstants.TestTearDownContext) as ThreadLocal<LinkedList<string>>;
                     break;
                 case AllureStageHelper.MethodType.OneTimeSetup:
-                    context = iTest.GetProp(AllureConstants.OneTimeSetupContext) as LinkedList<string>;
-                    break;
+                    return fixture.GetProp(AllureConstants.OneTimeSetupContext) as LinkedList<string>;
                 case AllureStageHelper.MethodType.OneTimeTearDown:
-                    context = iTest.GetProp(AllureConstants.OneTimeTearDownContext) as LinkedList<string>;
-                    break;
+                    return fixture.GetProp(AllureConstants.OneTimeTearDownContext) as LinkedList<string>;
                 case AllureStageHelper.MethodType.TestBody:
-                    context = iTest.GetProp(AllureConstants.TestBodyContext) as LinkedList<string>;
+                    context = iTest.GetProp(AllureConstants.TestBodyContext) as ThreadLocal<LinkedList<string>>;
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(type), type, null);
             }
 
-            return context;
+            if (StepsWorker.IsMainThread) return context.Value;
+            else
+            {
+                if (!context.IsValueCreated)
+                {
+                    context.Value = new LinkedList<string>();
+
+                    switch (type)
+                    {
+                        case AllureStageHelper.MethodType.Setup:
+                            context.Value.AddLast($"{iTest.GetPropAsString(AllureConstants.TestUuid)}-before");
+                            break;
+                        case AllureStageHelper.MethodType.Teardown:
+                            context.Value.AddLast($"{iTest.GetPropAsString(AllureConstants.TestUuid)}-after");
+                            break;
+                        case AllureStageHelper.MethodType.TestBody:
+                            context.Value.AddLast($"{iTest.GetPropAsString(AllureConstants.TestUuid)}");
+                            break;
+                        default:
+                            throw new ArgumentOutOfRangeException(nameof(type), type, null);
+                    }
+                }
+
+                return context.Value;
+
+            }
         }
 
         #endregion

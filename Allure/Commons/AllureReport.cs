@@ -36,8 +36,10 @@ namespace Allure.Commons
                     testUuid)
                 .SetCurrentTestSetupFixture(new FixtureResult {suiteUuid = "null"})
                 .SetCurrentTestTearDownFixture(new FixtureResult {suiteUuid = "null"})
-                .SetProp(AllureConstants.TestBodyContext, new LinkedList<string>())
-                .GetStepContext(AllureStageHelper.MethodType.TestBody).AddLast(testUuid);
+                .SetProp(AllureConstants.TestBodyContext, new ThreadLocal<LinkedList<string>>(true));
+            var bodyContext = currentTest.GetProp(AllureConstants.TestBodyContext) as ThreadLocal<LinkedList<string>>;
+            bodyContext.Value = new LinkedList<string>();
+            currentTest.GetStepContext(AllureStageHelper.MethodType.TestBody).AddLast(testUuid);
 
             AllureLifecycle.Instance.UpdateTestContainer(
                 containerUuid,
@@ -60,10 +62,8 @@ namespace Allure.Commons
             {
                 if (currentTest.GetCurrentTestTearDownFixture() != null)
                 {
-                    AllureLifecycle.Instance.StopFixture(q =>
+                    AllureLifecycle.Instance.StopFixture($"{currentTest.GetProp(AllureConstants.TestUuid)}-after", q =>
                         q.status = ReportHelper.GetNUnitStatus(TestContext.CurrentContext.Result.Outcome.Status));
-                    //AllureLifecycle.Instance.StepsWorker.CurrentStepContext =
-                    //    new LinkedList<string>(StepsWorker.TempContext);
                 }
 
                 var testresult = TestContext.CurrentContext.Result;
@@ -129,7 +129,6 @@ namespace Allure.Commons
 
             foreach (var testTupleInfo in _currentSuite.GetCompletedTestsInFixture())
             {
-                //AllureLifecycle.Instance.StepsWorker.CurrentStepContext.AddLast(testTupleInfo.TestUuid);
                 ReportHelper.StopAllureLogging(testTupleInfo.testResult,
                     testTupleInfo.TestUuid, testTupleInfo.TestContainerUuid, _currentSuite, false, null);
             }
@@ -151,17 +150,14 @@ namespace Allure.Commons
                         AllureLifecycle.Instance.UpdateTestCase(test.GetPropAsString(AllureConstants.TestUuid),
                             x => { x.start = AllureLifecycle.ToUnixTimestamp(); });
                         Thread.Sleep(5);
-                        AllureLifecycle.Instance.StepsWorker.ClearStepContext(test);
-                        AllureLifecycle.Instance.StepsWorker.GetCurrentStepContext(test).AddLast(
-                            test.GetPropAsString(AllureConstants.TestUuid));
-                        AllureLifecycle.Instance.StartStepAndStopIt(null, "The test was not started",
-                            Status.failed);
+
                         AllureLifecycle.Instance.UpdateTestCase(
                             test.GetPropAsString(AllureConstants.TestUuid),
                             x =>
                             {
                                 x.labels.RemoveAll(q => q.name == "thread");
                                 x.labels.Add(Label.Thread());
+                                x.descriptionHtml = "<font size=24, color=red>The test was not started</font>";
                             });
                         ReportHelper.StopAllureLogging(TestContext.CurrentContext.Result,
                             test.GetPropAsString(AllureConstants.TestUuid),

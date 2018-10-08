@@ -354,11 +354,6 @@ namespace Allure.Commons.Helpers
                     var testResult = new TestContext.ResultAdapter(new TestCaseResult(new TestMethod(pair.Key.Method)));
                     AddInfoToIgnoredTest(ref testResult);
                     pair.Key.SetProp(AllureConstants.TestResult, testResult);
-                    //AllureLifecycle.Instance.StepsWorker.ClearStepContext();
-                    AllureLifecycle.Instance.StepsWorker.GetCurrentStepContext(pair.Key).AddLast(
-                        pair.Key.GetPropAsString(AllureConstants.TestUuid));
-                    AllureLifecycle.Instance.StartStepAndStopIt(null, $"Test was ignored by reason: {pair.Value}",
-                        Status.skipped);
                     AllureLifecycle.Instance.UpdateTestContainer(
                         pair.Key.GetProp(AllureConstants.TestContainerUuid).ToString(),
                         x => x.start = AllureLifecycle.ToUnixTimestamp());
@@ -371,6 +366,7 @@ namespace Allure.Commons.Helpers
                             var subSuites = x.labels.Where(lbl => lbl.name.ToLower().Equals("subsuite")).ToList();
                             subSuites.ForEach(lbl => x.labels.Remove(lbl));
                             x.labels.Add(Label.SubSuite("Ignored tests/test-cases"));
+                            x.descriptionHtml = $"<font size=16, color=gray>Test was ignored by reason: {pair.Value}</font>";
                         });
                     Thread.Sleep(5);
                     StopAllureLogging(testResult, pair.Key.GetPropAsString(AllureConstants.TestUuid),
