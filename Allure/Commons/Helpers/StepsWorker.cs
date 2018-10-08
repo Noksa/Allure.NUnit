@@ -40,21 +40,32 @@ namespace Allure.Commons.Helpers
         {
             var stageInfo = AllureStageHelper.GetCurrentAllureStageInfo();
             var currentTestOrSuite = TestExecutionContext.CurrentContext.CurrentTest;
-            if (stageInfo.Stage == AllureStageHelper.MethodType.OneTimeSetup)
+            if (stageInfo.Stage == AllureStageHelper.MethodType.OneTimeSetUp)
             {
                 var oneTimeSetUpFixture =
                     currentTestOrSuite.GetCurrentOneTimeSetupFixture();
                 if (oneTimeSetUpFixture == null)
                 {
-                    currentTestOrSuite.SetProp(AllureConstants.OneTimeSetupContext, new LinkedList<string>());
-                    oneTimeSetUpFixture = new FixtureResult {name = stageInfo.MethodName};
-                    foreach (var (_, testContainerUuid, fixtureUuid) in currentTestOrSuite.GetAllTestsInFixture())
-                        AllureLifecycle.Instance.StartBeforeFixture(testContainerUuid,
-                            $"{fixtureUuid}-onetimesetup",
-                            oneTimeSetUpFixture);
-                    oneTimeSetUpFixture.suiteUuid =
-                        currentTestOrSuite.GetPropAsString(AllureConstants.FixtureUuid);
-                    currentTestOrSuite.SetCurrentOneTimeSetupFixture(oneTimeSetUpFixture);
+                    lock (FixtureCloseLocker)
+                    {
+                        if (currentTestOrSuite.GetCurrentOneTimeSetupFixture() == null)
+                        {
+                            currentTestOrSuite.SetProp(AllureConstants.OneTimeSetupContext,
+                                new ThreadLocal<LinkedList<string>>(true));
+                            var context =
+                                currentTestOrSuite.GetProp(AllureConstants.OneTimeSetupContext) as
+                                    ThreadLocal<LinkedList<string>>;
+                            context.Value = new LinkedList<string>();
+                            oneTimeSetUpFixture = new FixtureResult {name = stageInfo.MethodName};
+                            foreach (var (_, testContainerUuid) in currentTestOrSuite.GetAllTestsInFixture())
+                                AllureLifecycle.Instance.StartBeforeFixture(testContainerUuid,
+                                    $"{currentTestOrSuite.GetPropAsString(AllureConstants.FixtureUuid)}-onetimesetup",
+                                    oneTimeSetUpFixture);
+                            oneTimeSetUpFixture.suiteUuid =
+                                currentTestOrSuite.GetPropAsString(AllureConstants.FixtureUuid);
+                            currentTestOrSuite.SetCurrentOneTimeSetupFixture(oneTimeSetUpFixture);
+                        }
+                    }
                 }
             }
             else
@@ -72,7 +83,7 @@ namespace Allure.Commons.Helpers
                 }
             }
 
-            if (stageInfo.Stage == AllureStageHelper.MethodType.Setup)
+            if (stageInfo.Stage == AllureStageHelper.MethodType.SetUp)
                 if (currentTestOrSuite.GetCurrentTestSetupFixture() == null)
                 {
                     lock (FixtureCloseLocker)
@@ -115,7 +126,7 @@ namespace Allure.Commons.Helpers
                     }
                 }
 
-            if (stageInfo.Stage == AllureStageHelper.MethodType.Teardown)
+            if (stageInfo.Stage == AllureStageHelper.MethodType.TearDown)
                 if (currentTestOrSuite.GetCurrentTestTearDownFixture() == null)
                 {
                     lock (FixtureCloseLocker)
@@ -160,17 +171,27 @@ namespace Allure.Commons.Helpers
                     {
                         if (currentTestOrSuite.GetCurrentOneTimeTearDownFixture() == null)
                         {
-                            currentTestOrSuite.SetProp(AllureConstants.OneTimeTearDownContext,
-                                new LinkedList<string>());
-                            var oneTimeTearDownFixture = new FixtureResult {name = stageInfo.MethodName};
-                            foreach (var (_, testContainerUuid, fixtureUuid) in
-                                currentTestOrSuite.GetAllTestsInFixture())
-                                AllureLifecycle.Instance.StartAfterFixture(testContainerUuid,
-                                    $"{fixtureUuid}-onetimeteardown",
-                                    oneTimeTearDownFixture);
-                            oneTimeTearDownFixture.suiteUuid =
-                                currentTestOrSuite.GetPropAsString(AllureConstants.FixtureUuid);
-                            currentTestOrSuite.SetCurrentOneTimeTearDownFixture(oneTimeTearDownFixture);
+                            lock (FixtureCloseLocker)
+                            {
+                                if (currentTestOrSuite.GetCurrentOneTimeTearDownFixture() == null)
+                                {
+                                    currentTestOrSuite.SetProp(AllureConstants.OneTimeTearDownContext,
+                                        new ThreadLocal<LinkedList<string>>(true));
+                                    var context =
+                                        currentTestOrSuite.GetProp(AllureConstants.OneTimeTearDownContext) as
+                                            ThreadLocal<LinkedList<string>>;
+                                    context.Value = new LinkedList<string>();
+                                    var oneTimeTearDownFixture = new FixtureResult {name = stageInfo.MethodName};
+                                    foreach (var (_, testContainerUuid) in
+                                        currentTestOrSuite.GetAllTestsInFixture())
+                                        AllureLifecycle.Instance.StartAfterFixture(testContainerUuid,
+                                            $"{currentTestOrSuite.GetPropAsString(AllureConstants.FixtureUuid)}-onetimeteardown",
+                                            oneTimeTearDownFixture);
+                                    oneTimeTearDownFixture.suiteUuid =
+                                        currentTestOrSuite.GetPropAsString(AllureConstants.FixtureUuid);
+                                    currentTestOrSuite.SetCurrentOneTimeTearDownFixture(oneTimeTearDownFixture);
+                                }
+                            }
                         }
                     }
                 }

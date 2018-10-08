@@ -36,7 +36,7 @@ namespace Allure.Commons.Helpers
         }
 
         internal static void AddTestToCompletedInFixture(this ITest iTest,
-            (TestContext.ResultAdapter testResult, string TestUuid, string ContainerUuid, string FixtureUuid, ITest Test)
+            (TestContext.ResultAdapter testResult, string TestUuid, string ContainerUuid, ITest Test)
                 testTupleInfo)
         {
             lock (GetTestLocker)
@@ -61,38 +61,38 @@ namespace Allure.Commons.Helpers
             return iTest;
         }
 
-        internal static ConcurrentBag<(string TestUuid, string TestContainerUuid, string FixtureUuid)>
+        internal static ConcurrentBag<(string TestUuid, string TestContainerUuid)>
             GetAllTestsInFixture(this ITest iTest)
         {
-            ConcurrentBag<(string TestUuid, string TestContainerUuid, string FixtureUuid)> bag;
+            ConcurrentBag<(string TestUuid, string TestContainerUuid)> bag;
             if (iTest.IsSuite)
                 bag = iTest.GetProp(AllureConstants.AllTestsInFixture) as
-                    ConcurrentBag<(string TestUuid, string TestContainerUuid, string FixtureUuid)>;
+                    ConcurrentBag<(string TestUuid, string TestContainerUuid)>;
             else
                 bag = ((TestFixture) iTest.Fixture).GetProp(AllureConstants.AllTestsInFixture) as
-                    ConcurrentBag<(string TestUuid, string TestContainerUuid, string FixtureUuid)>;
+                    ConcurrentBag<(string TestUuid, string TestContainerUuid)>;
 
             return bag;
         }
 
         internal static
-            ConcurrentBag<(TestContext.ResultAdapter testResult, string TestUuid, string TestContainerUuid, string
-                FixtureUuid, ITest Test)> GetCompletedTestsInFixture(this ITest iTest)
+            ConcurrentBag<(TestContext.ResultAdapter testResult, string TestUuid, string TestContainerUuid, ITest Test)>
+            GetCompletedTestsInFixture(this ITest iTest)
         {
-            ConcurrentBag<(TestContext.ResultAdapter testResult, string TestUuid, string TestContainerUuid, string
-                FixtureUuid, ITest Test)> bag;
+            ConcurrentBag<(TestContext.ResultAdapter testResult, string TestUuid, string TestContainerUuid, ITest Test)>
+                bag;
             if (iTest.IsSuite)
             {
                 bag = iTest.GetProp(AllureConstants.CompletedTestsInFixture) as
                     ConcurrentBag<(TestContext.ResultAdapter testResult, string TestUuid, string TestContainerUuid,
-                        string FixtureUuid, ITest Test)>;
+                        ITest Test)>;
             }
             else
             {
                 var fixture = GetTestFixture(iTest);
                 bag = fixture.GetProp(AllureConstants.CompletedTestsInFixture) as
                     ConcurrentBag<(TestContext.ResultAdapter testResult, string TestUuid, string TestContainerUuid,
-                        string FixtureUuid, ITest Test)>;
+                        ITest Test)>;
             }
 
             return bag;
@@ -114,7 +114,7 @@ namespace Allure.Commons.Helpers
             if (test.IsSuite) return (TestFixture) test;
             var parents = GetAllTestParents(test);
             var fixture = parents.FirstOrDefault(q =>
-                q.GetPropAsString(AllureConstants.FixtureUuid) == test.GetPropAsString(AllureConstants.FixtureUuid));
+                !string.IsNullOrEmpty(q.GetPropAsString(AllureConstants.FixtureUuid)));
             return (TestFixture) fixture;
         }
 
@@ -223,12 +223,19 @@ namespace Allure.Commons.Helpers
             {
                 try
                 {
-                    return (T)Storage[uuid];
+                    return (T) Storage[uuid];
                 }
                 catch (KeyNotFoundException e)
                 {
-                    var msg = $"{e.Message} \nTried to find the key: {uuid}";
+                    var msg = $"{e.Message}\nTried to find the key: {uuid}";
                     var newEx = new KeyNotFoundException(msg);
+                    throw newEx;
+                }
+                catch (ArgumentNullException e)
+                {
+                    var msg =
+                        $"{e.Message}\nOne of the reasons for this error may be that you are trying to use multi-threading to record steps inside test.\nMulti-threading inside a test works only in the test body, not in [Setup], [TearDown], [OneTimeSetup] or [OneTimeTearDown].";
+                    var newEx = new ArgumentException(msg);
                     throw newEx;
                 }
             }
@@ -253,16 +260,19 @@ namespace Allure.Commons.Helpers
             ThreadLocal<LinkedList<string>> context;
             switch (type)
             {
-                case AllureStageHelper.MethodType.Setup:
+                case AllureStageHelper.MethodType.SetUp:
                     context = iTest.GetProp(AllureConstants.TestSetupContext) as ThreadLocal<LinkedList<string>>;
                     break;
-                case AllureStageHelper.MethodType.Teardown:
+                case AllureStageHelper.MethodType.TearDown:
                     context = iTest.GetProp(AllureConstants.TestTearDownContext) as ThreadLocal<LinkedList<string>>;
                     break;
-                case AllureStageHelper.MethodType.OneTimeSetup:
-                    return fixture.GetProp(AllureConstants.OneTimeSetupContext) as LinkedList<string>;
+                case AllureStageHelper.MethodType.OneTimeSetUp:
+                    context = fixture.GetProp(AllureConstants.OneTimeSetupContext) as ThreadLocal<LinkedList<string>>;
+                    break;
                 case AllureStageHelper.MethodType.OneTimeTearDown:
-                    return fixture.GetProp(AllureConstants.OneTimeTearDownContext) as LinkedList<string>;
+                    context =
+                        fixture.GetProp(AllureConstants.OneTimeTearDownContext) as ThreadLocal<LinkedList<string>>;
+                    break;
                 case AllureStageHelper.MethodType.TestBody:
                     context = iTest.GetProp(AllureConstants.TestBodyContext) as ThreadLocal<LinkedList<string>>;
                     break;
@@ -271,31 +281,34 @@ namespace Allure.Commons.Helpers
             }
 
             if (StepsWorker.IsMainThread) return context.Value;
-            else
+
+           
+            if (!context.IsValueCreated)
             {
-                if (!context.IsValueCreated)
+                context.Value = new LinkedList<string>();
+                switch (type)
                 {
-                    context.Value = new LinkedList<string>();
-
-                    switch (type)
-                    {
-                        case AllureStageHelper.MethodType.Setup:
-                            context.Value.AddLast($"{iTest.GetPropAsString(AllureConstants.TestUuid)}-before");
-                            break;
-                        case AllureStageHelper.MethodType.Teardown:
-                            context.Value.AddLast($"{iTest.GetPropAsString(AllureConstants.TestUuid)}-after");
-                            break;
-                        case AllureStageHelper.MethodType.TestBody:
-                            context.Value.AddLast($"{iTest.GetPropAsString(AllureConstants.TestUuid)}");
-                            break;
-                        default:
-                            throw new ArgumentOutOfRangeException(nameof(type), type, null);
-                    }
+                    case AllureStageHelper.MethodType.SetUp:
+                        throw new ArgumentException(
+                            "Sorry, you cannot use multi-threading inside the [Setup] method. It works only in the test case.");
+                    case AllureStageHelper.MethodType.TearDown:
+                        throw new ArgumentException(
+                            "Sorry, you cannot use multi-threading inside the [TearDown] method. It works only in the test case.");
+                    case AllureStageHelper.MethodType.TestBody:
+                        context.Value.AddLast(iTest.GetPropAsString(AllureConstants.TestUuid));
+                        break;
+                    case AllureStageHelper.MethodType.OneTimeSetUp:
+                        throw new ArgumentException(
+                            "Sorry, you cannot use multi-threading inside the [OneTimeSetUp] method. It works only in the test case.");
+                    case AllureStageHelper.MethodType.OneTimeTearDown:
+                        throw new ArgumentException(
+                            "Sorry, you cannot use multi-threading inside the [OneTimeTearDown] method. It works only in the test case.");
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(type), type, null);
                 }
-
-                return context.Value;
-
             }
+
+            return context.Value;
         }
 
         #endregion

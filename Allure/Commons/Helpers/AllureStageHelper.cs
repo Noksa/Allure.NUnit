@@ -55,13 +55,13 @@ namespace Allure.Commons.Helpers
                 switch (attribute)
                 {
                     case SetUpAttribute _:
-                        methodType = MethodType.Setup;
+                        methodType = MethodType.SetUp;
                         break;
                     case OneTimeSetUpAttribute _:
-                        methodType = MethodType.OneTimeSetup;
+                        methodType = MethodType.OneTimeSetUp;
                         break;
                     case TearDownAttribute _:
-                        methodType = MethodType.Teardown;
+                        methodType = MethodType.TearDown;
                         break;
                     case OneTimeTearDownAttribute _:
                         methodType = MethodType.OneTimeTearDown;
@@ -85,9 +85,9 @@ namespace Allure.Commons.Helpers
 
         internal enum MethodType
         {
-            Setup,
-            Teardown,
-            OneTimeSetup,
+            SetUp,
+            TearDown,
+            OneTimeSetUp,
             OneTimeTearDown,
             TestBody
         }

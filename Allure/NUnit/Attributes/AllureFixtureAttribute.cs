@@ -32,9 +32,9 @@ namespace Allure.NUnit.Attributes
                 var tests = ReportHelper.GetAllTestsInSuite(suite);
                 context.CurrentTest.SetProp(AllureConstants.FixtureUuid, $"{suite.FullName}-fixture")
                     .SetProp(AllureConstants.AllTestsInFixture,
-                        new ConcurrentBag<(string, string, string)>())
+                        new ConcurrentBag<(string, string)>())
                     .SetProp(AllureConstants.CompletedTestsInFixture,
-                        new ConcurrentBag<(TestContext.ResultAdapter, string, string, string, ITest)>())
+                        new ConcurrentBag<(TestContext.ResultAdapter, string, string, ITest)>())
                     .SetProp(AllureConstants.RunsCountTests,
                         new List<(string, string)>())
                     .SetProp(AllureConstants.FixtureStorage, new ConcurrentDictionary<string, object>());
@@ -79,21 +79,19 @@ namespace Allure.NUnit.Attributes
             var uuid = $"{test.Id}_{Guid.NewGuid():N}";
             var testUuid = $"{uuid}-{suite.Id}-test-run{countRun}";
             var containerUuid = $"{uuid}-{suite.Id}-run{countRun}-container";
-            var fixtureUuid = suite.GetPropAsString(AllureConstants.FixtureUuid);
 
             test.SetProp(AllureConstants.TestContainerUuid, containerUuid)
                 .SetProp(AllureConstants.TestUuid, testUuid)
-                .SetProp(AllureConstants.FixtureUuid, fixtureUuid)
                 .SetProp(AllureConstants.TestAsserts, new List<Exception>())
                 .SetProp(AllureConstants.TestBodyContext, new ThreadLocal<LinkedList<string>>(true));
             var bodyContext = test.GetProp(AllureConstants.TestBodyContext) as ThreadLocal<LinkedList<string>>;
             bodyContext.Value = new LinkedList<string>();
             ReportHelper.StartAllureLogging(test, testUuid, containerUuid, suite);
             OutLogger.LogInProgress(
-                $"Started allure logging for \"{test.FullName}\", run #{countRun}\n\"{testUuid}\"\n\"{containerUuid}\"\n\"{fixtureUuid}\"");
+                $"Started allure logging for \"{test.FullName}\", run #{countRun}\n\"{testUuid}\"\n\"{containerUuid}\"");
 
             suite.GetAllTestsInFixture()
-                .Add((testUuid, containerUuid, fixtureUuid));
+                .Add((testUuid, containerUuid));
             suite.GetCountTestInFixture()
                 .Add((testUuid, containerUuid));
         }

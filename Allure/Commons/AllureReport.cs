@@ -79,8 +79,7 @@ namespace Allure.Commons
                 currentTest.AddTestToCompletedInFixture((
                     TestContext.CurrentContext.Result,
                     currentTest.GetPropAsString(AllureConstants.TestUuid),
-                    currentTest.GetPropAsString(AllureConstants.TestContainerUuid),
-                    currentTest.GetPropAsString(AllureConstants.FixtureUuid), currentTest));
+                    currentTest.GetPropAsString(AllureConstants.TestContainerUuid), currentTest));
             }
         }
 
