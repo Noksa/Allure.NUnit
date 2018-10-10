@@ -39,6 +39,7 @@
         internal const string TestBodyContext = "TestBodyStepContextProp";
         internal const string TestSetupContext = "TestSetupStepContextProp";
         internal const string TestTearDownContext = "TestTearDownStepContextProp";
+        internal const string AllureConfigFileCustomDirMemberName = "AllureConfigDir";
 
         #endregion
     }

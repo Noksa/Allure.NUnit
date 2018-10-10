@@ -34,8 +34,7 @@ namespace Allure.Commons
         private AllureLifecycle()
         {
             Verify = new Verify();
-            var dir = Path.GetDirectoryName(GetType().Assembly.Location);
-            using (var r = new StreamReader(Path.Combine(dir, AllureConstants.ConfigFilename)))
+            using (var r = new StreamReader(ConfigFinder.AllureConfigFilePath))
             {
                 var deserializeSettings = new JsonSerializerSettings {Formatting = Formatting.Indented};
                 var json = r.ReadToEnd();
@@ -162,8 +161,8 @@ namespace Allure.Commons
 
         public AllureLifecycle StopFixture(string uuid)
         {
-            var fixture = 
-            TestExecutionContext.CurrentContext.CurrentTest.Storage().Remove<FixtureResult>(uuid);
+            var fixture =
+                TestExecutionContext.CurrentContext.CurrentTest.Storage().Remove<FixtureResult>(uuid);
             //StepsWorker.ClearStepContext();
             fixture.stage = Stage.finished;
             fixture.stop = ToUnixTimestamp();
@@ -173,8 +172,8 @@ namespace Allure.Commons
         public AllureLifecycle StopFixture(string uuid, Action<FixtureResult> beforeStop)
         {
             UpdateFixture(uuid, beforeStop);
-            var fixture = 
-            TestExecutionContext.CurrentContext.CurrentTest.Storage().Remove<FixtureResult>(uuid);
+            var fixture =
+                TestExecutionContext.CurrentContext.CurrentTest.Storage().Remove<FixtureResult>(uuid);
             //StepsWorker.ClearStepContext();
             fixture.stage = Stage.finished;
             fixture.stop = ToUnixTimestamp();
@@ -468,7 +467,8 @@ namespace Allure.Commons
 
         public AllureLifecycle UpdateStep(Action<StepResult> update)
         {
-            update.Invoke(TestExecutionContext.CurrentContext.CurrentTest.Storage().Get<StepResult>(StepsWorker.GetCurrentStep()));
+            update.Invoke(TestExecutionContext.CurrentContext.CurrentTest.Storage()
+                .Get<StepResult>(StepsWorker.GetCurrentStep()));
             return this;
         }
 
@@ -608,7 +608,8 @@ namespace Allure.Commons
                 source = source
             };
             _writer.Write(source, content);
-            TestExecutionContext.CurrentContext.CurrentTest.Storage().Get<ExecutableItem>(StepsWorker.GetCurrentStep()).attachments.Add(attachment);
+            TestExecutionContext.CurrentContext.CurrentTest.Storage().Get<ExecutableItem>(StepsWorker.GetCurrentStep())
+                .attachments.Add(attachment);
             return this;
         }
 
