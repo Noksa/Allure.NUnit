@@ -1,6 +1,4 @@
 ﻿using System.IO;
-using System.Linq;
-using System.Reflection;
 using NUnit.Framework.Internal;
 
 namespace Allure.Commons.Helpers
@@ -19,7 +17,7 @@ namespace Allure.Commons.Helpers
                 var assemblyWithTests = TestExecutionContext.CurrentContext?.CurrentTest?.TypeInfo?.Assembly;
                 if (assemblyWithTests != null)
                 {
-                    pathOfDir = GetDirFromAssembly(assemblyWithTests);
+                    pathOfDir = ReflectionHelper.GetMemberValueFromAssembly(assemblyWithTests, AllureConstants.AllureConfigFileCustomDirMemberName)?.ToString();
                 }
 
                 if (string.IsNullOrEmpty(pathOfDir))
@@ -43,47 +41,6 @@ namespace Allure.Commons.Helpers
 
                 return filePath;
             }
-        }
-
-
-        private static string GetDirFromAssembly(Assembly assembly)
-        {
-            string pathOfDir = null;
-            var types = assembly.GetTypes();
-
-            foreach (var type in types)
-            {
-                var member = type.GetMember(AllureConstants.AllureConfigFileCustomDirMemberName,
-                    BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy |
-                    BindingFlags.NonPublic).FirstOrDefault();
-                if (member == null)
-
-                    member = type
-                        .GetFields(BindingFlags.Public | BindingFlags.Static |
-                                   BindingFlags.FlattenHierarchy | BindingFlags.NonPublic)
-                        .FirstOrDefault(fi =>
-                            fi.IsLiteral && !fi.IsInitOnly &&
-                            fi.Name == AllureConstants.AllureConfigFileCustomDirMemberName);
-                if (member != null)
-                {
-                    var memberType = member.MemberType;
-                    object value = null;
-                    switch (memberType)
-                    {
-                        case MemberTypes.Field:
-                            value = ((FieldInfo) member).GetValue(null);
-                            break;
-                        case MemberTypes.Property:
-                            value = ((PropertyInfo) member).GetValue(null);
-                            break;
-                    }
-
-                    pathOfDir = value?.ToString();
-                    break;
-                }
-            }
-
-            return pathOfDir;
         }
     }
 }

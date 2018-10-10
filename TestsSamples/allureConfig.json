@@ -37,7 +37,8 @@
     "runtime": [
       {
         "OS": "System.Environment.OS",
-        "AllureVersion": "Allure.Commons.AllureLifecycle.AllureVersion"
+        "AllureVersion": "Allure.Commons.AllureLifecycle.AllureVersion",
+        "AllureVersionNotExists": "Allure.Commons.AllureLifecycle.AllureVersion1"
       }
     ]
   }
