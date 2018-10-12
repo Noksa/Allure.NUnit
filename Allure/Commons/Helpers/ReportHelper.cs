@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using System.Threading;
 using Allure.Commons.Model;
 using Allure.NUnit.Attributes;
@@ -307,9 +308,29 @@ namespace Allure.Commons.Helpers
         internal static string MakeGoodErrorMsg(string errorMsg)
         {
             if (string.IsNullOrEmpty(errorMsg)) return errorMsg;
-            var index = errorMsg.IndexOf("Multiple", StringComparison.Ordinal);
-            if (index == -1 || index == 0) return errorMsg;
-            var goodMsg = errorMsg.Substring(0, index) + " \r\n" + errorMsg.Substring(index);
+            string goodMsg;
+            var index = errorMsg.IndexOf("Multiple failures or warnings in test", StringComparison.Ordinal);
+            if (index == -1)
+            {
+                var regex = new Regex("([^\\s].*)(  )(1\\).*)");
+                var match = regex.Match(errorMsg);
+                if (match.Success && match.Groups.Count >= 4)
+                {
+                    var firstmsg = match.Groups[1].Value;
+                    var secondmsg = match.Groups[3].Value;
+                    goodMsg = $"{firstmsg}{Environment.NewLine}{Environment.NewLine}And one failure or warning in test:{Environment.NewLine}{secondmsg}";
+                }
+                else goodMsg = errorMsg;
+            }
+            else if (index == 0)
+            {
+                goodMsg = errorMsg;
+            }
+            else
+            {
+                goodMsg = errorMsg.Substring(0, index) + $" {Environment.NewLine}{Environment.NewLine}" + errorMsg.Substring(index);
+            }
+
             return goodMsg;
         }
 

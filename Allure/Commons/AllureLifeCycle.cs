@@ -267,109 +267,24 @@ namespace Allure.Commons
 
         public void RunStep(Action stepBody, params object[] stepParams)
         {
-            var stepName = GetCallerMethodName();
-            StepRunner<object>(stepName, stepBody, true, Status.failed, stepParams);
+            var stepName = StepRunner.GetCallerMethodName();
+            StepRunner.Run<object>(stepName, stepBody, true, Status.failed, stepParams);
         }
 
         public TResult RunStep<TResult>(Func<TResult> stepBody, params object[] stepParams)
         {
-            var stepName = GetCallerMethodName();
-            return StepRunner<TResult>(stepName, stepBody, true, Status.failed, stepParams);
+            var stepName = StepRunner.GetCallerMethodName();
+            return StepRunner.Run<TResult>(stepName, stepBody, true, Status.failed, stepParams);
         }
 
         public void RunStep(string stepName, Action stepBody, params object[] stepParams)
         {
-            StepRunner<object>(stepName, stepBody, true, Status.failed, stepParams);
+            StepRunner.Run<object>(stepName, stepBody, true, Status.failed, stepParams);
         }
 
         public TResult RunStep<TResult>(string stepName, Func<TResult> stepBody, params object[] stepParams)
         {
-            return StepRunner<TResult>(stepName, stepBody, true, Status.failed, stepParams);
-        }
-
-        internal static TResult StepRunner<TResult>(string stepName, Delegate del, bool throwEx,
-            Status stepStatusIfFailed,
-            params object[] stepParams)
-        {
-            var stepStatus = Status.passed;
-            var assertsBefore = TestContext.CurrentContext.Result.Assertions.Count();
-            Exception throwedEx = null;
-            var resultFunc = default(TResult);
-            var uuid = $"{Guid.NewGuid():N}";
-            var stepResult = new StepResult
-            {
-                name = stepName,
-                start = ToUnixTimestamp(DateTimeOffset.Now)
-            };
-            Instance.StartStep(uuid, stepResult);
-
-            if (Instance.Config.Allure.EnableParameters)
-                for (var i = 0; i < stepParams.Length; i++)
-                {
-                    var strArg = stepParams[i].ToString();
-                    var param = new Parameter
-                    {
-                        name = $"Parameter #{i + 1}, {stepParams[i].GetType().Name}",
-                        value = strArg
-                    };
-                    Instance.UpdateStep(uuid, q => q.parameters.Add(param));
-                }
-
-            try
-            {
-                switch (del)
-                {
-                    case Action action when resultFunc is bool:
-                        action.Invoke();
-                        resultFunc = (TResult) (object) true;
-                        break;
-                    case Func<TResult> func:
-                        resultFunc = func.Invoke();
-                        break;
-                    default:
-                        resultFunc = (TResult) del.DynamicInvoke();
-                        break;
-                }
-
-                if (assertsBefore != TestContext.CurrentContext.Result.Assertions.Count())
-                    stepStatus = stepStatusIfFailed;
-            }
-            catch (Exception e)
-            {
-                if (e is TargetInvocationException)
-                    throwedEx = GetInnerExceptions(e)
-                        .First(q => q.GetType() != typeof(TargetInvocationException));
-                else
-                    throwedEx = e;
-
-                if (throwedEx is InconclusiveException)
-                    stepStatus = Status.skipped;
-
-                else if (throwedEx is SuccessException)
-                    throwEx = false; // no throw ex, because assert.pass
-                else
-                    stepStatus = stepStatusIfFailed;
-
-                var list =
-                    TestExecutionContext.CurrentContext.CurrentTest.GetProp(AllureConstants.TestAsserts) as
-                        List<Exception>;
-                list?.Add(throwedEx);
-                if (!throwedEx.Data.Contains("Rethrow"))
-                {
-                    throwedEx.Data.Add("Rethrow", true);
-                    Instance.MakeStepWithExMessage(assertsBefore, stepName, throwedEx, stepStatusIfFailed);
-                    CurrentTestActionsInException?.ForEach(action => action.Invoke());
-                    GlobalActionsInException?.ForEach(action => action.Invoke());
-                }
-            }
-            finally
-            {
-                Instance.UpdateStep(step => step.status = stepStatus);
-                Instance.StopStep(uuid);
-            }
-
-            if (throwEx && throwedEx != null) throw throwedEx;
-            return resultFunc;
+            return StepRunner.Run<TResult>(stepName, stepBody, true, Status.failed, stepParams);
         }
 
         public AllureLifecycle StartStep(string uuid, StepResult result)
@@ -407,7 +322,7 @@ namespace Allure.Commons
                     StartStepAndStopIt(ex, exStepMsg, Status.failed);
                 }
 
-                GetInnerExceptions(ex).ToList().ForEach(inEx =>
+                StepRunner.GetInnerExceptions(ex).ToList().ForEach(inEx =>
                 {
                     var msg = MakeExMessageWithoutStepName(stepName, inEx.Message);
                     StartStepAndStopIt(inEx, msg, Status.failed);
@@ -661,26 +576,6 @@ namespace Allure.Commons
             {
                 sw.WriteLine(jsonContent);
             }
-        }
-
-        private static string GetCallerMethodName()
-        {
-            var frame = new StackFrame(2);
-            var method = frame.GetMethod();
-            return method.Name;
-        }
-
-        private static IEnumerable<Exception> GetInnerExceptions(Exception ex)
-        {
-            if (ex == null) throw new ArgumentNullException(nameof(ex));
-
-            if (ex.InnerException == null) yield break;
-            var innerException = ex.InnerException;
-            do
-            {
-                yield return innerException;
-                innerException = innerException.InnerException;
-            } while (innerException != null);
         }
 
         private void StartFixture(string uuid, FixtureResult fixtureResult)

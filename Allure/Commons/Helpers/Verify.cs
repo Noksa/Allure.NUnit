@@ -35,7 +35,7 @@ namespace Allure.Commons.Helpers
 
         private bool VerifyRunner(string stepName, Action action, Status stepStatusIfFailed, params object[] stepParams)
         {
-            var result = AllureLifecycle.StepRunner<bool>(stepName, action, false, stepStatusIfFailed, stepParams);
+            var result = StepRunner.Run<bool>(stepName, action, false, stepStatusIfFailed, stepParams);
             return result;
         }
 
