@@ -385,10 +385,14 @@ namespace Allure.Commons.Helpers
 
         private static void AddInfoToIgnoredTest(ref TestContext.ResultAdapter testResult)
         {
-            var prop = testResult.Outcome.GetType().GetProperty(nameof(ResultState.Status));
-            prop.SetValue(testResult.Outcome, TestStatus.Skipped);
-            prop = testResult.Outcome.GetType().GetProperty(nameof(ResultState.Label));
-            prop.SetValue(testResult.Outcome, AllureConstants.TestWasIgnored);
+            var backingField = testResult.Outcome.GetType()
+                .GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public).First(p =>
+                    p.Name.EndsWith("__BackingField") && p.Name.Contains("<Status>"));
+            backingField.SetValue(testResult.Outcome, TestStatus.Skipped);
+            backingField = testResult.Outcome.GetType()
+                .GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
+                .First(p => p.Name.EndsWith("__BackingField") && p.Name.Contains("<Label>"));
+            backingField.SetValue(testResult.Outcome, AllureConstants.TestWasIgnored);
         }
 
         #endregion
