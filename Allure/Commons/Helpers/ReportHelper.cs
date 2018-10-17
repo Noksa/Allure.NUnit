@@ -398,10 +398,10 @@ namespace Allure.Commons.Helpers
 
         private static void AddInfoToIgnoredTest(ref TestContext.ResultAdapter testResult)
         {
-            var prop = testResult.Outcome.GetType().GetProperty(nameof(ResultState.Status));
-            prop.SetValue(testResult.Outcome, TestStatus.Skipped);
-            prop = testResult.Outcome.GetType().GetProperty(nameof(ResultState.Label));
-            prop.SetValue(testResult.Outcome, AllureConstants.TestWasIgnored);
+            var backingField = testResult.Outcome.GetType().GetBackingField(nameof(ResultState.Status), true);
+            backingField.SetValue(testResult.Outcome, TestStatus.Skipped);
+            backingField = testResult.Outcome.GetType().GetBackingField(nameof(ResultState.Label), true);
+            backingField.SetValue(testResult.Outcome, AllureConstants.TestWasIgnored);
         }
 
         #endregion

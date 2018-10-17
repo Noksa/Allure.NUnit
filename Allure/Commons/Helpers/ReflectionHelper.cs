@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Reflection;
 
 namespace Allure.Commons.Helpers
@@ -76,6 +77,15 @@ namespace Allure.Commons.Helpers
                 }
             }
             return memberValue;
+        }
+
+        internal static FieldInfo GetBackingField(this Type type, string name, bool partialMatch = false)
+        {
+            var msg = partialMatch ? ", which contains" : "";
+           var field = type.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public).FirstOrDefault(p =>
+                p.Name.EndsWith("__BackingField") && partialMatch ? p.Name.Contains(name) : p.Name.Equals(name));
+            if (field != null) return field;
+            throw new MissingFieldException($"Cant find backing field in type {nameof(type)} with name{msg} \"{name}\"");
         }
     }
 }
