@@ -373,7 +373,7 @@ namespace Allure.Commons
             return this;
         }
 
-        public AllureLifecycle MakeStepWithExMessage(int assertsBeforeCount, string stepName, Exception ex,
+        private AllureLifecycle MakeStepWithExMessage(int assertsBeforeCount, string stepName, Exception ex,
             Status stepStatus)
         {
             var exMsg = ex.Message;
