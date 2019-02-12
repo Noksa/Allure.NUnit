@@ -15,8 +15,9 @@ namespace Allure.Commons.Json
 
             public bool AllowLocalHistoryTrend { get; set; } = false;
 
-            //public bool AllowLocalHistory { get; set; } = false;
             public bool DebugMode { get; set; } = false;
+
+            public HashSet<string> Links { get; } = new HashSet<string>();
         }
 
         public class Category

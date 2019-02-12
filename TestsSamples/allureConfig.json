@@ -2,7 +2,10 @@
   "allure": {
     "directory": "allure-results",
     "allowEmptySuites": true,
-    "enableParameters": true
+    "enableParameters": true,
+    "links": [
+      "http//test{link}"
+    ]
   },
 
   "categories": [

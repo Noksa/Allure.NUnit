@@ -62,6 +62,8 @@ namespace TestsSamples
 
         [TestCase(TestName = "Debug testing")]
         [Repeat(5)]
+        [AllureLink("http://mysite.com/ID-123", false)] // will not replaced by pattern
+        [AllureLink("ID-124")]
         public void Debug()
         {
             AllureLifecycle.Instance.RunStep("This is step in debugging test", () => { });

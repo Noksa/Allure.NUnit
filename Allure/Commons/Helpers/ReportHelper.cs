@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using System.Threading;
 using Allure.Commons.Model;
 using Allure.Commons.Storage;
@@ -147,9 +148,10 @@ namespace Allure.Commons.Helpers
                                 x => x.labels.Add(Label.Feature(feature)));
                         break;
                     case AllureIssueAttribute issueAttr:
+                        var value = GetValueWithPattern(issueAttr);
                         AllureLifecycle.Instance.UpdateTestCase(
                             testUuid,
-                            x => x.links.Add(issueAttr.IssueLink));
+                            x => x.links.Add(value));
                         break;
                     case AllureSeverityAttribute severityAttr:
                         AllureLifecycle.Instance.UpdateTestCase(
@@ -175,9 +177,10 @@ namespace Allure.Commons.Helpers
                                 x => x.description = testAttr.Description);
                         break;
                     case AllureTmsAttribute tmsAttr:
+                        value = GetValueWithPattern(tmsAttr);
                         AllureLifecycle.Instance.UpdateTestCase(
                             testUuid,
-                            x => x.links.Add(tmsAttr.TmsLink));
+                            x => x.links.Add(value));
                         break;
                     case AllureSuiteAttribute suiteAttr:
                         AllureLifecycle.Instance.UpdateTestCase(
@@ -214,9 +217,10 @@ namespace Allure.Commons.Helpers
                         hideParamsNumber = hideParamsAttr.ParamNumbers;
                         break;
                     case AllureLinkAttribute linkAttr:
+                        value = GetValueWithPattern(linkAttr);
                         AllureLifecycle.Instance.UpdateTestCase(
                             testUuid,
-                            x => x.links.Add(linkAttr.Link));
+                            x => x.links.Add(value));
                         break;
                     case AllureFlakyAttribute flakyAttr:
                         AllureLifecycle.Instance.UpdateTestCase(
@@ -344,6 +348,45 @@ namespace Allure.Commons.Helpers
         }
 
         #region Privates
+
+        private static Link GetValueWithPattern(Attribute attr)
+        {
+            Link value = null;
+            var isNeedReplace = false;
+            if (attr is AllureTmsAttribute || attr is AllureLinkAttribute || attr is AllureIssueAttribute)
+            {
+                switch (attr)
+                {
+                    case AllureTmsAttribute tmsAttr:
+                        value = tmsAttr.TmsLink;
+                        isNeedReplace = tmsAttr.ReplaceWithPattern;
+                        break;
+                    case AllureIssueAttribute issueAttr:
+                        value = issueAttr.IssueLink;
+                        isNeedReplace = issueAttr.ReplaceWithPattern;
+                        break;
+                    case AllureLinkAttribute linkAttr:
+                        value = linkAttr.Link;
+                        isNeedReplace = linkAttr.ReplaceWithPattern;
+                        break;
+                }
+            }
+            else throw new ArgumentException(nameof(attr));
+
+            if (!string.IsNullOrWhiteSpace(value?.type) && isNeedReplace)
+            {
+                var typeValue = $"{{{value.type}}}";
+                var pattern = AllureLifecycle.Instance.Config.Allure.Links.FirstOrDefault(p =>
+                    Regex.IsMatch(p, $".*{typeValue}.*", RegexOptions.IgnoreCase));
+                if (!string.IsNullOrEmpty(pattern))
+                {
+                    var newUrl = Regex.Replace(pattern, typeValue, value.url);
+                    value.url = newUrl;
+                }
+            }
+
+            return value;
+        }
 
         private static void FailIgnoredTests(Dictionary<ITest, string> dict, ITest suite)
         {
