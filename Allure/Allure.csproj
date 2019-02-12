@@ -4,20 +4,26 @@
     <TargetFrameworks>netstandard2.0;net45;net451;net452;net46;net461;net462;net47;net471</TargetFrameworks>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>Noksa.NUnit.Allure</PackageId>
-    <Version>2.5.0.1</Version>
+    <Version>2.5.1</Version>
     <Authors>Noksa (Alexandr Danilin)</Authors>
     <Product>Noksa (Alexandr Danilin)</Product>
     <Description>Allure with improvements</Description>
     <Copyright>Noksa (Alexandr Danilin)</Copyright>
     <Company>Noksa (Alexandr Danilin)</Company>
     <PackageTags>allure</PackageTags>
-    <PackageReleaseNotes>Fix #16</PackageReleaseNotes>
+    <PackageReleaseNotes>Added new feature #18</PackageReleaseNotes>
     <NeutralLanguage>en</NeutralLanguage>
     <RepositoryUrl>https://github.com/Noksa/Allure.NUnit</RepositoryUrl>
     <PackageProjectUrl>https://github.com/Noksa/Allure.NUnit</PackageProjectUrl>
     <PackageIconUrl>https://avatars0.githubusercontent.com/u/36312857?s=40&amp;v=4</PackageIconUrl>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="ScreenshotsReadme\**" />
+    <EmbeddedResource Remove="ScreenshotsReadme\**" />
+    <None Remove="ScreenshotsReadme\**" />
+  </ItemGroup>
 
   <ItemGroup>
     <None Remove="allureConfig.json" />
@@ -39,10 +45,6 @@
       <Version>4.5.0</Version>
     </PackageReference>
 	</ItemGroup>
-  
-  <ItemGroup>
-    <Folder Include="ScreenshotsReadme\" />
-  </ItemGroup>
   
   
 

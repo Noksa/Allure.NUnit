@@ -7,7 +7,7 @@ namespace Allure.NUnit.Attributes
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class, AllowMultiple = true)]
     public class AllureLinkAttribute : NUnitAttribute
     {
-        private const string LinkType = "mylink";
+        private const string LinkType = "link";
 
         public AllureLinkAttribute(string name, string url = null)
         {

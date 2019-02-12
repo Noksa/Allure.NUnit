@@ -62,6 +62,9 @@ namespace TestsSamples
 
         [TestCase(TestName = "Debug testing")]
         [Repeat(5)]
+        [AllureLink("ID-123")]
+        [AllureIssue("DSDID-123")]
+        [AllureTms("IDASD-123")]
         public void Debug()
         {
             AllureLifecycle.Instance.RunStep("This is step in debugging test", () => { });
