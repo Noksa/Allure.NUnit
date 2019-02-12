@@ -352,24 +352,28 @@ namespace Allure.Commons.Helpers
         private static Link GetValueWithPattern(Attribute attr)
         {
             Link value = null;
+            var isNeedReplace = false;
             if (attr is AllureTmsAttribute || attr is AllureLinkAttribute || attr is AllureIssueAttribute)
             {
                 switch (attr)
                 {
                     case AllureTmsAttribute tmsAttr:
                         value = tmsAttr.TmsLink;
+                        isNeedReplace = tmsAttr.ReplaceWithPattern;
                         break;
                     case AllureIssueAttribute issueAttr:
                         value = issueAttr.IssueLink;
+                        isNeedReplace = issueAttr.ReplaceWithPattern;
                         break;
                     case AllureLinkAttribute linkAttr:
                         value = linkAttr.Link;
+                        isNeedReplace = linkAttr.ReplaceWithPattern;
                         break;
                 }
             }
             else throw new ArgumentException(nameof(attr));
 
-            if (!string.IsNullOrWhiteSpace(value?.type))
+            if (!string.IsNullOrWhiteSpace(value?.type) && isNeedReplace)
             {
                 var typeValue = $"{{{value.type}}}";
                 var pattern = AllureLifecycle.Instance.Config.Allure.Links.FirstOrDefault(p =>

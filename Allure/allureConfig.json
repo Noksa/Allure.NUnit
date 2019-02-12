@@ -3,7 +3,10 @@
     "directory": "allure-results",
     "allowEmptySuites": true,
     "enableParameters": true,
-    "allowLocalHistoryTrend": false
+    "allowLocalHistoryTrend": false,
+    "links": [
+
+    ] 
   },
 
   "categories": [

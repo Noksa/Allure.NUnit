@@ -9,16 +9,19 @@ namespace Allure.NUnit.Attributes
     {
         private const string LinkType = "link";
 
-        public AllureLinkAttribute(string name, string url = null)
+        public AllureLinkAttribute(string name, string url, bool replaceWithPattern = true)
         {
             Link = new Link {name = name, type = LinkType, url = url};
+            ReplaceWithPattern = replaceWithPattern;
         }
 
-        public AllureLinkAttribute(string url)
+        public AllureLinkAttribute(string url, bool replaceWithPattern = true)
         {
             Link = new Link {name = url, type = LinkType, url = url};
+            ReplaceWithPattern = replaceWithPattern;
         }
 
         internal Link Link { get; }
+        internal bool ReplaceWithPattern { get; }
     }
 }

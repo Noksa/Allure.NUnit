@@ -9,16 +9,19 @@ namespace Allure.NUnit.Attributes
     {
         private const string TmsType = "tms";
 
-        public AllureTmsAttribute(string name, string url = null)
+        public AllureTmsAttribute(string name, string url, bool replaceWithPattern = true)
         {
             TmsLink = new Link {name = name, type = TmsType, url = url};
+            ReplaceWithPattern = replaceWithPattern;
         }
 
-        public AllureTmsAttribute(string url)
+        public AllureTmsAttribute(string url, bool replaceWithPattern = true)
         {
             TmsLink = new Link {name = url, type = TmsType, url = url};
+            ReplaceWithPattern = replaceWithPattern;
         }
 
         internal Link TmsLink { get; }
+        internal bool ReplaceWithPattern { get; }
     }
 }

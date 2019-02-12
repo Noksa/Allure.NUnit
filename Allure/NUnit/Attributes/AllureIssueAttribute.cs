@@ -9,16 +9,19 @@ namespace Allure.NUnit.Attributes
     {
         private const string IssueType = "issue";
 
-        public AllureIssueAttribute(string name, string url = null)
+        public AllureIssueAttribute(string name, string url, bool replaceWithPattern = true)
         {
             IssueLink = new Link {name = name, type = IssueType, url = url};
+            ReplaceWithPattern = replaceWithPattern;
         }
 
-        public AllureIssueAttribute(string url)
+        public AllureIssueAttribute(string url, bool replaceWithPattern = true)
         {
             IssueLink = new Link {name = url, type = IssueType, url = url};
+            ReplaceWithPattern = replaceWithPattern;
         }
 
         internal Link IssueLink { get; }
+        internal bool ReplaceWithPattern { get; }
     }
 }

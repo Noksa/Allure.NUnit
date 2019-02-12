@@ -4,8 +4,8 @@
     "allowEmptySuites": true,
     "enableParameters": true,
     "links": [
-      "http://somesite.com/{link}"
-    ] 
+      "http//test{link}"
+    ]
   },
 
   "categories": [
