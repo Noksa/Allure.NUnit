@@ -50,10 +50,12 @@ namespace Allure.Commons.Helpers
                 for (var i = 0; i < listOfArgs.Count; i++)
                 {
                     var paramNum = i + 1;
-                    var strArg = listOfArgs[i].ToString();
+                    var arg = listOfArgs[i];
+                    var strArg = arg != null ? arg.ToString() : "null";
+                    var argType = arg != null ? arg.GetType().Name : "Unknown";
                     var param = new Parameter
                     {
-                        name = $"Parameter #{paramNum}, {listOfArgs[i].GetType().Name}",
+                        name = $"Parameter #{paramNum}, {argType}",
                         value = hideParams.Contains(paramNum) ? "Parameter is hidden" : strArg
                     };
                     if (removeParams.Contains(paramNum)) continue;

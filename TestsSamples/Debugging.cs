@@ -89,5 +89,11 @@ namespace TestsSamples
         {
             AllureLifecycle.Instance.Verify.That("This is parametrized step", 5, Is.GreaterThan(2), login, password);
         }
+
+        [TestCase("5th Avenue", 10, null)]
+        public void TestWithNullParameter(string street, int houseNUmber, int? apartment)
+        {
+            AllureLifecycle.Instance.Verify.That("This is parametrized step with null parameter", !apartment.HasValue);
+        }
     }
 }
