@@ -1,4 +1,6 @@
-﻿using Allure.Commons;
+﻿using System.IO;
+using System.Reflection;
+using Allure.Commons;
 using NUnit.Framework;
 using NUnit.Framework.Internal;
 
@@ -6,6 +8,9 @@ namespace TestsSamples.SamplesWithBaseClass
 {
     public abstract class TestsBaseClass : AllureReport
     {
+
+        private static string AllureConfigDir = Path.GetDirectoryName(typeof(AllureLifecycle).Assembly.Location);
+
         [SetUp]
         public void SetupTest()
         {

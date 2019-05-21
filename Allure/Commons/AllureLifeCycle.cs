@@ -33,10 +33,9 @@ namespace Allure.Commons
         private AllureLifecycle()
         {
             Verify = new Verify();
-            var dir = Path.GetDirectoryName(GetType().Assembly.Location);
-            using (var r = new StreamReader(Path.Combine(dir, AllureConstants.ConfigFilename)))
+            using (var r = new StreamReader(ConfigFinder.AllureConfigFilePath))
             {
-                var deserializeSettings = new JsonSerializerSettings {Formatting = Formatting.Indented};
+                var deserializeSettings = new JsonSerializerSettings { Formatting = Formatting.Indented };
                 var json = r.ReadToEnd();
                 Config = JsonConvert.DeserializeObject<Configuration>(json,
                     deserializeSettings);

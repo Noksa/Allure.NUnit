@@ -430,13 +430,10 @@ namespace Allure.Commons.Helpers
 
         private static void AddInfoToIgnoredTest(ref TestContext.ResultAdapter testResult)
         {
-            var backingField = testResult.Outcome.GetType()
-                .GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public).First(p =>
-                    p.Name.EndsWith("__BackingField") && p.Name.Contains("<Status>"));
+            var type = testResult.Outcome.GetType();
+            var backingField = type.GetBackingField(nameof(ResultState.Status), true);
             backingField.SetValue(testResult.Outcome, TestStatus.Skipped);
-            backingField = testResult.Outcome.GetType()
-                .GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
-                .First(p => p.Name.EndsWith("__BackingField") && p.Name.Contains("<Label>"));
+            backingField = type.GetBackingField(nameof(ResultState.Label), true);
             backingField.SetValue(testResult.Outcome, AllureConstants.TestWasIgnored);
         }
 

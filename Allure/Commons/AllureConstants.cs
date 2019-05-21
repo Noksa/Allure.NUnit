@@ -33,6 +33,7 @@
         internal const string CurrentTestSetupFixture = "CurrentTestSetupFixtureProp";
         internal const string CurrentTestTearDownFixture = "CurrentTestTearDownFixtureProp";
         internal const string IgnoredTests = "IgnoredTestsProp";
+        internal const string AllureConfigFileCustomDirMemberName = "AllureConfigDir";
 
         #endregion
     }
