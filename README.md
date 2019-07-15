@@ -1,7 +1,7 @@
 # C# SpecFlow3 Allure Adaptor
 [![nuget](http://flauschig.ch/nubadge.php?id=Noksa.NUnit.SpecFlow3)](https://www.nuget.org/packages/Noksa.NUnit.SpecFlow3/)
 
-Support SpecFlow version 3
+Adaptor for SpecFlow version 3
 
 # C# Classic NUnit Allure with new features
 [![nuget](http://flauschig.ch/nubadge.php?id=Noksa.NUnit.Allure)](https://www.nuget.org/packages/Noksa.NUnit.Allure/)
