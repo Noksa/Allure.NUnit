@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Threading;
 using Allure.Commons.Model;
@@ -13,12 +14,14 @@ using NUnit.Framework.Interfaces;
 using NUnit.Framework.Internal;
 using TestResult = Allure.Commons.Model.TestResult;
 
+[assembly:InternalsVisibleTo("Allure.SpecFlowPlugin")]
+
 namespace Allure.Commons.Helpers
 {
     internal static class ReportHelper
     {
         internal static readonly object Locker = new object();
-
+        internal static bool IsSpecFlow { get; set; }
         internal static List<ITest> GetAllTestsInSuite(ITest suite)
         {
             var list = new List<ITest>();

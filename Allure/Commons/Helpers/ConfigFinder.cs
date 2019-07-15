@@ -1,5 +1,8 @@
 ﻿using System.IO;
+using System.Runtime.CompilerServices;
 using NUnit.Framework.Internal;
+
+[assembly:InternalsVisibleTo("Allure.SpecFlowPlugin")]
 
 namespace Allure.Commons.Helpers
 {

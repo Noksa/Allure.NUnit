@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net45;net451;net452;net46;net461;net462;net47;net471</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net45;net451;net452;net46;net461</TargetFrameworks>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>Noksa.NUnit.Allure</PackageId>
     <Version>2.5.3</Version>

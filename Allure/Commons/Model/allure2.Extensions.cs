@@ -129,6 +129,15 @@ namespace Allure.Commons.Model
                 value = Environment.MachineName ?? "Unknown host"
             };
         }
+
+        public static Label Host(string allureTitle)
+        {
+            return new Label
+            {
+                name = "host",
+                value = allureTitle
+            };
+        }
     }
 
     public partial class Link
