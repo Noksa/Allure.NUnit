@@ -1,7 +1,9 @@
-# C# SpecFlow3 allure adaptor 
+# C# SpecFlow3 Allure Adaptor
 [![nuget](http://flauschig.ch/nubadge.php?id=Noksa.NUnit.SpecFlow3)](https://www.nuget.org/packages/Noksa.NUnit.SpecFlow3/)
 
-# C# Allure with new features
+Support SpecFlow version 3
+
+# C# Classic NUnit Allure with new features
 [![nuget](http://flauschig.ch/nubadge.php?id=Noksa.NUnit.Allure)](https://www.nuget.org/packages/Noksa.NUnit.Allure/)
 
 If you want to use allure steps in `[Setup]`, `[TearDown]`, `[OneTimeSetUp]` and `[OneTimeTearDown]` then this is what you need.<br/>
