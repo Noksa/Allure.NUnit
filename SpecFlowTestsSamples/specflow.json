@@ -4,11 +4,4 @@
       "assembly": "Allure.SpecFlowPlugin"
     }
   ]
-  //"plugins": [
-  //  {
-  //    "name": "AllurePlugin",
-  //    "path": "AllureSpecFlow.AllurePlugin", 
-  //    "type": "Runtime"
-  //  }
-  //]
 }

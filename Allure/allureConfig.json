@@ -49,5 +49,9 @@
         "AllureVersion": "Allure.Commons.AllureLifecycle.AllureVersion"
       }
     ]
-  }
+  },
+
+  "specflow": {
+
+  } 
 }
