@@ -7,9 +7,14 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Allure", "Allure\Allure.csp
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestsSamples", "TestsSamples\TestsSamples.csproj", "{FBD961C2-9FE1-4824-BD5F-7FD9D4CA2507}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Allure.SpecFlowPlugin", "AllureSpecFlow\Allure.SpecFlowPlugin.csproj", "{A372D22B-1934-4059-8824-A6C2584DBD07}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AllureSpecFlow", "AllureSpecFlow\AllureSpecFlow.csproj", "{A372D22B-1934-4059-8824-A6C2584DBD07}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SpecFlowTestsSamples", "SpecFlowTestsSamples\SpecFlowTestsSamples.csproj", "{4E99D5B9-1591-4404-A461-AEF9C0FBA82F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{412BBF66-35E7-49E1-B50F-188BE0FABCDE}"
+	ProjectSection(SolutionItems) = preProject
+		Directory.Build.targets = Directory.Build.targets
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

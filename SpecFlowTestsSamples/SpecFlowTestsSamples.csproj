@@ -30,7 +30,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\AllureSpecFlow\Allure.SpecFlowPlugin.csproj" />
+    <ProjectReference Include="..\AllureSpecFlow\AllureSpecFlow.csproj" />
   </ItemGroup>
 
 </Project>

@@ -4,14 +4,14 @@
     <TargetFrameworks>netstandard2.0;net45;net451;net452;net46;net461</TargetFrameworks>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>Noksa.NUnit.Allure</PackageId>
-    <Version>2.5.3</Version>
+    <Version>2.6</Version>
     <Authors>Noksa (Alexandr Danilin)</Authors>
     <Product>Noksa (Alexandr Danilin)</Product>
     <Description>Allure with improvements</Description>
     <Copyright>Noksa (Alexandr Danilin)</Copyright>
     <Company>Noksa (Alexandr Danilin)</Company>
     <PackageTags>allure</PackageTags>
-    <PackageReleaseNotes>Fix NullReferenceException being thrown if parameterized test has one of the parameter value equal null</PackageReleaseNotes>
+    <PackageReleaseNotes>Add SpecFlow to configuration</PackageReleaseNotes>
     <NeutralLanguage>en</NeutralLanguage>
     <RepositoryUrl>https://github.com/Noksa/Allure.NUnit</RepositoryUrl>
     <PackageProjectUrl>https://github.com/Noksa/Allure.NUnit</PackageProjectUrl>

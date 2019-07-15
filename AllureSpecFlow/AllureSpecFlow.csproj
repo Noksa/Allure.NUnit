@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net45;net451;net452;net46;netcoreapp2.1</TargetFrameworks>
+    <NuspecFile>$(MSBuildThisFileDirectory)AllureSpecFlow.nuspec</NuspecFile>    
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+  </PropertyGroup>
+  
+  <PropertyGroup>
+    <RunPostBuildEvent>Always</RunPostBuildEvent>
+    <PackageId>AllureSpecFlow</PackageId>
+    <AssemblyName>Allure.SpecFlowPlugin</AssemblyName>    
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <Content Include="specflow.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CsvHelper" Version="12.1.2" />
+    <PackageReference Include="SpecFlow" Version="3.0.225" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Allure\Allure.csproj" />
+  </ItemGroup>
+
+</Project>
