@@ -127,7 +127,7 @@ namespace AllureSpecFlow
                             }
                             catch (Exception ex)
                             {
-                                var status = (ex.GetType().Name.Contains(PluginHelper.IGNORE_EXCEPTION)) ?
+                                var status = (ex.GetType().Name.Contains(PluginHelper.IgnoreException)) ?
                                         Status.skipped : Status.broken;
 
                                 allure.StopFixture(x => x.status = status);

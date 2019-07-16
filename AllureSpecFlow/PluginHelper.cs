@@ -1,35 +1,54 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Allure.Commons;
 using Allure.Commons.Helpers;
-using Allure.Commons.Json;
 using Allure.Commons.Model;
 using Allure.NUnit.Attributes;
 using TechTalk.SpecFlow;
 using TechTalk.SpecFlow.Bindings;
+using Configuration = Allure.Commons.Json.Configuration;
 using TestResult = Allure.Commons.Model.TestResult;
 
 namespace AllureSpecFlow
 {
     public static class PluginHelper
     {
-        public static string IGNORE_EXCEPTION = "IgnoreException";
-        private static readonly ScenarioInfo emptyScenarioInfo = new ScenarioInfo(string.Empty, string.Empty);
-        private static FeatureInfo emptyFeatureInfo = new FeatureInfo(
+        public const string IgnoreException = "IgnoreException";
+        private static readonly ScenarioInfo EmptyScenarioInfo = new ScenarioInfo(string.Empty, string.Empty);
+
+        private static readonly FeatureInfo emptyFeatureInfo = new FeatureInfo(
             CultureInfo.CurrentCulture, string.Empty, string.Empty);
 
-        internal static Configuration.SpecFlowCfg PluginConfiguration = GetConfiguration();
+        private static Configuration.SpecFlowCfg _specFlowCfg;
+
+        internal static Configuration.SpecFlowCfg SpecFlowCfg
+        {
+            get
+            {
+                if (_specFlowCfg != null) return _specFlowCfg;
+                _specFlowCfg = GetConfiguration();
+                return _specFlowCfg;
+            }
+        }
 
         private static Configuration.SpecFlowCfg GetConfiguration()
         {
             var config = AllureLifecycle.Instance.Config.SpecFlow;
-            if (config == null) throw new NullReferenceException("Can't find specflow section in allure config file.");
+            if (config == null)
+            {
+                const string msg =
+                    "Can't find specflow block in allureConfig.json.\nAdd specflow block before run tests.\nVisit https://github.com/Noksa/Allure.NUnit/wiki/SpecFlow-configuration for more information.";
+                throw new ConfigurationException(msg);
+            }
+
             ReportHelper.IsSpecFlow = true;
             return config;
         }
+
         internal static string GetFeatureContainerId(FeatureInfo featureInfo)
         {
             var id = (featureInfo != null)
@@ -56,7 +75,7 @@ namespace AllureSpecFlow
             ScenarioContext scenarioContext)
         {
             var featureInfo = featureContext?.FeatureInfo ?? emptyFeatureInfo;
-            var scenarioInfo = scenarioContext?.ScenarioInfo ?? emptyScenarioInfo;
+            var scenarioInfo = scenarioContext?.ScenarioInfo ?? EmptyScenarioInfo;
             var tags = GetTags(featureInfo, scenarioInfo);
             var testResult = new TestResult
             {
@@ -67,7 +86,9 @@ namespace AllureSpecFlow
                 labels = new List<Label>
                     {
                         Label.Thread(),
-                        string.IsNullOrWhiteSpace(AllureLifecycle.Instance.Config.Allure.Title) ? Label.Host() : Label.Host(AllureLifecycle.Instance.Config.Allure.Title),
+                        string.IsNullOrWhiteSpace(AllureLifecycle.Instance.Config.Allure.Title)
+                            ? Label.Host()
+                            : Label.Host(AllureLifecycle.Instance.Config.Allure.Title),
                         Label.Feature(featureInfo.Title)
                     }
                     .Union(tags.Item1).ToList(),
@@ -114,14 +135,14 @@ namespace AllureSpecFlow
                 message = GetFullExceptionMessage(ex),
                 trace = ex.ToString()
             };
-
         }
 
         private static string GetFullExceptionMessage(Exception ex)
         {
             return ex.Message +
-            (!string.IsNullOrWhiteSpace(ex.InnerException?.Message) ?
-                $" -> {GetFullExceptionMessage(ex.InnerException)}" : string.Empty);
+                   (!string.IsNullOrWhiteSpace(ex.InnerException?.Message)
+                       ? $" -> {GetFullExceptionMessage(ex.InnerException)}"
+                       : string.Empty);
         }
 
         private static Tuple<List<Label>, List<Link>> GetTags(FeatureInfo featureInfo, ScenarioInfo scenarioInfo)
@@ -136,79 +157,107 @@ namespace AllureSpecFlow
             {
                 var tagValue = tag;
                 // link
-                if (TryUpdateValueByMatch(PluginConfiguration.links.link, ref tagValue))
+                if (TryUpdateValueByMatch(SpecFlowCfg.links.link, ref tagValue))
                 {
                     var linkAttr = new AllureLinkAttribute(tagValue);
                     var link = ReportHelper.GetValueWithPattern(linkAttr);
-                    result.Item2.Add(link); continue;
+                    result.Item2.Add(link);
+                    continue;
                 }
+
                 // issue
-                if (TryUpdateValueByMatch(PluginConfiguration.links.issue, ref tagValue))
+                if (TryUpdateValueByMatch(SpecFlowCfg.links.issue, ref tagValue))
                 {
                     var issueAttr = new AllureIssueAttribute(tagValue);
                     var issue = ReportHelper.GetValueWithPattern(issueAttr);
-                    result.Item2.Add(issue); continue;
+                    result.Item2.Add(issue);
+                    continue;
                 }
+
                 // tms
-                if (TryUpdateValueByMatch(PluginConfiguration.links.tms, ref tagValue))
+                if (TryUpdateValueByMatch(SpecFlowCfg.links.tms, ref tagValue))
                 {
                     var tmsAttr = new AllureTmsAttribute(tagValue);
                     var tms = ReportHelper.GetValueWithPattern(tmsAttr);
-                    result.Item2.Add(tms); continue;
+                    result.Item2.Add(tms);
+                    continue;
                 }
+
                 // parent suite
-                if (TryUpdateValueByMatch(PluginConfiguration.grouping.suites.parentSuite, ref tagValue))
+                if (TryUpdateValueByMatch(SpecFlowCfg.grouping.suites.parentSuite, ref tagValue))
                 {
-                    result.Item1.Add(Label.ParentSuite(tagValue)); continue;
+                    result.Item1.Add(Label.ParentSuite(tagValue));
+                    continue;
                 }
+
                 // suite
-                if (TryUpdateValueByMatch(PluginConfiguration.grouping.suites.suite, ref tagValue))
+                if (TryUpdateValueByMatch(SpecFlowCfg.grouping.suites.suite, ref tagValue))
                 {
-                    result.Item1.Add(Label.Suite(tagValue)); continue;
+                    result.Item1.Add(Label.Suite(tagValue));
+                    continue;
                 }
+
                 // sub suite
-                if (TryUpdateValueByMatch(PluginConfiguration.grouping.suites.subSuite, ref tagValue))
+                if (TryUpdateValueByMatch(SpecFlowCfg.grouping.suites.subSuite, ref tagValue))
                 {
-                    result.Item1.Add(Label.SubSuite(tagValue)); continue;
+                    result.Item1.Add(Label.SubSuite(tagValue));
+                    continue;
                 }
+
                 // epic
-                if (TryUpdateValueByMatch(PluginConfiguration.grouping.behaviors.epic, ref tagValue))
+                if (TryUpdateValueByMatch(SpecFlowCfg.grouping.behaviors.epic, ref tagValue))
                 {
-                    result.Item1.Add(Label.Epic(tagValue)); continue;
+                    result.Item1.Add(Label.Epic(tagValue));
+                    continue;
                 }
+
                 // story
-                if (TryUpdateValueByMatch(PluginConfiguration.grouping.behaviors.story, ref tagValue))
+                if (TryUpdateValueByMatch(SpecFlowCfg.grouping.behaviors.story, ref tagValue))
                 {
-                    result.Item1.Add(Label.Story(tagValue)); continue;
+                    result.Item1.Add(Label.Story(tagValue));
+                    continue;
                 }
+
                 // package
-                if (TryUpdateValueByMatch(PluginConfiguration.grouping.packages.package, ref tagValue))
+                if (TryUpdateValueByMatch(SpecFlowCfg.grouping.packages.package, ref tagValue))
                 {
-                    result.Item1.Add(Label.Package(tagValue)); continue;
+                    result.Item1.Add(Label.Package(tagValue));
+                    continue;
                 }
+
                 // test class
-                if (TryUpdateValueByMatch(PluginConfiguration.grouping.packages.testClass, ref tagValue))
+                if (TryUpdateValueByMatch(SpecFlowCfg.grouping.packages.testClass, ref tagValue))
                 {
-                    result.Item1.Add(Label.TestClass(tagValue)); continue;
+                    result.Item1.Add(Label.TestClass(tagValue));
+                    continue;
                 }
+
                 // test method
-                if (TryUpdateValueByMatch(PluginConfiguration.grouping.packages.testMethod, ref tagValue))
+                if (TryUpdateValueByMatch(SpecFlowCfg.grouping.packages.testMethod, ref tagValue))
                 {
-                    result.Item1.Add(Label.TestMethod(tagValue)); continue;
+                    result.Item1.Add(Label.TestMethod(tagValue));
+                    continue;
                 }
+
                 // owner
-                if (TryUpdateValueByMatch(PluginConfiguration.labels.owner, ref tagValue))
+                if (TryUpdateValueByMatch(SpecFlowCfg.labels.owner, ref tagValue))
                 {
-                    result.Item1.Add(Label.Owner(tagValue)); continue;
+                    result.Item1.Add(Label.Owner(tagValue));
+                    continue;
                 }
+
                 // severity
-                if (TryUpdateValueByMatch(PluginConfiguration.labels.severity, ref tagValue) && Enum.TryParse(tagValue, true, out SeverityLevel level))
+                if (TryUpdateValueByMatch(SpecFlowCfg.labels.severity, ref tagValue) &&
+                    Enum.TryParse(tagValue, true, out SeverityLevel level))
                 {
-                    result.Item1.Add(Label.Severity(level)); continue;
+                    result.Item1.Add(Label.Severity(level));
+                    continue;
                 }
+
                 // tag
                 result.Item1.Add(Label.Tag(tagValue));
             }
+
             return result;
         }
 
@@ -220,7 +269,8 @@ namespace AllureSpecFlow
             Regex regex;
             try
             {
-                regex = new Regex(expression, RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.IgnoreCase);
+                regex = new Regex(expression,
+                    RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.IgnoreCase);
             }
             catch (Exception)
             {

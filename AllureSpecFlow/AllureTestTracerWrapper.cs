@@ -19,9 +19,7 @@ namespace AllureSpecFlow
 {
     public class AllureTestTracerWrapper : TestTracer, ITestTracer
     {
-        readonly string noMatchingStepMessage = "No matching step definition found for the step";
-        static readonly AllureLifecycle allure = AllureLifecycle.Instance;
-        static readonly Configuration.SpecFlowCfg pluginConfiguration;
+        private const string NoMatchingStepMessage = "No matching step definition found for the step";
 
         public AllureTestTracerWrapper(ITraceListener traceListener, IStepFormatter stepFormatter,
             IStepDefinitionSkeletonProvider stepDefinitionSkeletonProvider, SpecFlowConfiguration specFlowConfiguration)
@@ -31,7 +29,7 @@ namespace AllureSpecFlow
 
         static AllureTestTracerWrapper()
         {
-            pluginConfiguration = PluginHelper.PluginConfiguration;
+            _ = PluginHelper.SpecFlowCfg;
         }
 
         void ITestTracer.TraceStep(StepInstance stepInstance, bool showAdditionalArguments)
@@ -43,37 +41,37 @@ namespace AllureSpecFlow
         void ITestTracer.TraceStepDone(BindingMatch match, object[] arguments, TimeSpan duration)
         {
             TraceStepDone(match, arguments, duration);
-            allure.StopStep(x => x.status = Status.passed);
+            AllureLifecycle.Instance.StopStep(x => x.status = Status.passed);
         }
 
         void ITestTracer.TraceError(Exception ex)
         {
             TraceError(ex);
-            allure.StopStep(x => x.status = Status.failed);
+            AllureLifecycle.Instance.StopStep(x => x.status = Status.failed);
             FailScenario(ex);
         }
 
         void ITestTracer.TraceStepSkipped()
         {
             TraceStepSkipped();
-            allure.StopStep(x => x.status = Status.skipped);
+            AllureLifecycle.Instance.StopStep(x => x.status = Status.skipped);
         }
 
         void ITestTracer.TraceStepPending(BindingMatch match, object[] arguments)
         {
             TraceStepPending(match, arguments);
-            allure.StopStep(x => x.status = Status.skipped);
+            AllureLifecycle.Instance.StopStep(x => x.status = Status.skipped);
         }
 
         void ITestTracer.TraceNoMatchingStepDefinition(StepInstance stepInstance, ProgrammingLanguage targetLanguage,
             CultureInfo bindingCulture, List<BindingMatch> matchesWithoutScopeCheck)
         {
             TraceNoMatchingStepDefinition(stepInstance, targetLanguage, bindingCulture, matchesWithoutScopeCheck);
-            allure.StopStep(x => x.status = Status.broken);
-            allure.UpdateTestCase(x =>
+            AllureLifecycle.Instance.StopStep(x => x.status = Status.broken);
+            AllureLifecycle.Instance.UpdateTestCase(x =>
                 {
                     x.status = Status.broken;
-                    x.statusDetails = new StatusDetails { message = noMatchingStepMessage };
+                    x.statusDetails = new StatusDetails { message = NoMatchingStepMessage };
                 });
         }
 
@@ -87,7 +85,7 @@ namespace AllureSpecFlow
 
             // parse MultilineTextArgument
             if (stepInstance.MultilineTextArgument != null)
-                allure.AddAttachment(
+                AllureLifecycle.Instance.AddAttachment(
                     "multiline argument",
                     "text/plain",
                     Encoding.ASCII.GetBytes(stepInstance.MultilineTextArgument),
@@ -100,15 +98,15 @@ namespace AllureSpecFlow
             if (table != null)
             {
                 var header = table.Header.ToArray();
-                if (pluginConfiguration.stepArguments.convertToParameters)
+                if (PluginHelper.SpecFlowCfg.stepArguments.convertToParameters)
                 {
                     var parameters = new List<Parameter>();
 
                     // convert 2 column table into param-value
                     if (table.Header.Count == 2)
                     {
-                        var paramNameMatch = Regex.IsMatch(header[0], pluginConfiguration.stepArguments.paramNameRegex);
-                        var paramValueMatch = Regex.IsMatch(header[1], pluginConfiguration.stepArguments.paramValueRegex);
+                        var paramNameMatch = Regex.IsMatch(header[0], PluginHelper.SpecFlowCfg.stepArguments.paramNameRegex);
+                        var paramValueMatch = Regex.IsMatch(header[1], PluginHelper.SpecFlowCfg.stepArguments.paramValueRegex);
                         if (paramNameMatch && paramValueMatch)
                         {
                             for (int i = 0; i < table.RowCount; i++)
@@ -134,7 +132,7 @@ namespace AllureSpecFlow
                 }
             }
 
-            allure.StartStep(PluginHelper.NewId(), stepResult);
+            AllureLifecycle.Instance.StartStep(PluginHelper.NewId(), stepResult);
 
             // add csv table for multi-row table if was not processed as params already
             if (!isTableProcessed)
@@ -155,7 +153,7 @@ namespace AllureSpecFlow
                         }
                         csv.NextRecord();
                     }
-                    allure.AddAttachment("table", "text/csv",
+                    AllureLifecycle.Instance.AddAttachment("table", "text/csv",
                         Encoding.ASCII.GetBytes(sw.ToString()), ".csv");
                 }
             }
@@ -163,7 +161,7 @@ namespace AllureSpecFlow
 
         private static void FailScenario(Exception ex)
         {
-            allure.UpdateTestCase(
+            AllureLifecycle.Instance.UpdateTestCase(
                 x =>
                 {
                     x.status = (x.status != Status.none) ? x.status : Status.failed;
