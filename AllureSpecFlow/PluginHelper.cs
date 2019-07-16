@@ -8,9 +8,11 @@ using Allure.Commons;
 using Allure.Commons.Helpers;
 using Allure.Commons.Model;
 using Allure.NUnit.Attributes;
+using NUnit.Framework.Internal;
 using TechTalk.SpecFlow;
 using TechTalk.SpecFlow.Bindings;
 using static Allure.Commons.Json.Configuration;
+using TestResult = Allure.Commons.Model.TestResult;
 
 namespace AllureSpecFlow
 {
@@ -76,12 +78,14 @@ namespace AllureSpecFlow
             var featureInfo = featureContext?.FeatureInfo ?? EmptyFeatureInfo;
             var scenarioInfo = scenarioContext?.ScenarioInfo ?? EmptyScenarioInfo;
             var tags = GetTags(featureInfo, scenarioInfo);
+            var currentTest = TestExecutionContext.CurrentContext.CurrentTest;
+            var fullNameForLog = ReportHelper.GenerateFullNameWithParameters(currentTest, currentTest.FullName);
             var testResult = new TestResult
             {
                 uuid = NewId(),
-                historyId = scenarioInfo.Title,
+                historyId = fullNameForLog,
                 name = scenarioInfo.Title,
-                fullName = scenarioInfo.Title,
+                fullName = fullNameForLog,
                 labels = new List<Label>
                     {
                         Label.Thread(),
@@ -93,10 +97,10 @@ namespace AllureSpecFlow
                     .Union(tags.Item1).ToList(),
                 links = tags.Item2
             };
-
             AllureLifecycle.Instance.StartTestCase(containerId, testResult);
             scenarioContext?.Set(testResult);
             featureContext?.Get<HashSet<TestResult>>().Add(testResult);
+            ReportHelper.AddToTestCaseParametersInfo(currentTest, testResult.uuid, new[] { -1 }, new[] { -1 });
             return testResult;
         }
 
