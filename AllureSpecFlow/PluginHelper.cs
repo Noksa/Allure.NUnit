@@ -7,8 +7,7 @@ using Allure.Commons;
 using Allure.Commons.Helpers;
 using Allure.Commons.Json;
 using Allure.Commons.Model;
-using Newtonsoft.Json.Linq;
-using NUnit.Framework.Internal;
+using Allure.NUnit.Attributes;
 using TechTalk.SpecFlow;
 using TechTalk.SpecFlow.Bindings;
 using TestResult = Allure.Commons.Model.TestResult;
@@ -139,17 +138,23 @@ namespace AllureSpecFlow
                 // link
                 if (TryUpdateValueByMatch(PluginConfiguration.links.link, ref tagValue))
                 {
-                    result.Item2.Add(new Link() { name = tagValue, url = tagValue }); continue;
+                    var linkAttr = new AllureLinkAttribute(tagValue);
+                    var link = ReportHelper.GetValueWithPattern(linkAttr);
+                    result.Item2.Add(link); continue;
                 }
                 // issue
                 if (TryUpdateValueByMatch(PluginConfiguration.links.issue, ref tagValue))
                 {
-                    result.Item2.Add(Link.Issue(tagValue, tagValue)); continue;
+                    var issueAttr = new AllureIssueAttribute(tagValue);
+                    var issue = ReportHelper.GetValueWithPattern(issueAttr);
+                    result.Item2.Add(issue); continue;
                 }
                 // tms
                 if (TryUpdateValueByMatch(PluginConfiguration.links.tms, ref tagValue))
                 {
-                    result.Item2.Add(Link.Tms(tagValue, tagValue)); continue;
+                    var tmsAttr = new AllureTmsAttribute(tagValue);
+                    var tms = ReportHelper.GetValueWithPattern(tmsAttr);
+                    result.Item2.Add(tms); continue;
                 }
                 // parent suite
                 if (TryUpdateValueByMatch(PluginConfiguration.grouping.suites.parentSuite, ref tagValue))
@@ -197,7 +202,7 @@ namespace AllureSpecFlow
                     result.Item1.Add(Label.Owner(tagValue)); continue;
                 }
                 // severity
-                if (TryUpdateValueByMatch(PluginConfiguration.labels.severity, ref tagValue) && Enum.TryParse(tagValue, out SeverityLevel level))
+                if (TryUpdateValueByMatch(PluginConfiguration.labels.severity, ref tagValue) && Enum.TryParse(tagValue, true, out SeverityLevel level))
                 {
                     result.Item1.Add(Label.Severity(level)); continue;
                 }
@@ -212,7 +217,7 @@ namespace AllureSpecFlow
             if (string.IsNullOrWhiteSpace(value) || string.IsNullOrWhiteSpace(expression))
                 return false;
 
-            Regex regex = null;
+            Regex regex;
             try
             {
                 regex = new Regex(expression, RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.IgnoreCase);
@@ -222,21 +227,15 @@ namespace AllureSpecFlow
                 return false;
             }
 
-            if (regex == null)
-                return false;
-
             if (regex.IsMatch(value))
             {
                 var groups = regex.Match(value).Groups;
-                if (groups?.Count == 1)
-                    value = groups[0].Value;
-                else
-                    value = groups[1].Value;
+                value = groups.Count == 1 ? groups[0].Value : groups[1].Value;
 
                 return true;
             }
-            else
-                return false;
+
+            return false;
         }
     }
 }

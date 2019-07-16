@@ -2,14 +2,14 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
   <metadata>
     <id>Noksa.NUnit.SpecFlow3</id>
-    <version>1.0.1</version>
+    <version>1.0.2</version>
     <authors>Noksa (Alexandr Danilin)</authors>
     <owners>Noksa (Alexandr Danilin)</owners>    
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <projectUrl>https://github.com/Noksa/Allure.NUnit</projectUrl>
     <iconUrl>https://avatars0.githubusercontent.com/u/36312857?s=40&amp;v=4</iconUrl>
     <description>Allure SpecFlow3 adaptor for NUnit</description>
-    <releaseNotes>SpecFlow3 allure support</releaseNotes>
+    <releaseNotes>Fix severity/issue/tms/link tags</releaseNotes>
     <copyright>Noksa (Alexandr Danilin)</copyright>
     <tags>allure, specflow</tags>
     <repository url="https://github.com/Noksa/Allure.NUnit" />

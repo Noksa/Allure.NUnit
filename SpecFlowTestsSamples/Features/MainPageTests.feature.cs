@@ -74,6 +74,7 @@ namespace SpecFlowTestsSamples.Features
         [NUnit.Framework.CategoryAttribute("UiTest")]
         [NUnit.Framework.CategoryAttribute("Chrome")]
         [NUnit.Framework.CategoryAttribute("low")]
+        [NUnit.Framework.CategoryAttribute("link:433")]
         public virtual void VerifyingTitleOfTheHomePage()
         {
             TechTalk.SpecFlow.ScenarioInfo scenarioInfo = new TechTalk.SpecFlow.ScenarioInfo("Verifying title of the Home page", null, new string[] {
@@ -96,6 +97,7 @@ this.ScenarioInitialize(scenarioInfo);
         [NUnit.Framework.CategoryAttribute("UiTest")]
         [NUnit.Framework.CategoryAttribute("Chrome")]
         [NUnit.Framework.CategoryAttribute("low")]
+        [NUnit.Framework.CategoryAttribute("link:433")]
         public virtual void VerifyingShopPhoneNumberOnTheHomePage()
         {
             TechTalk.SpecFlow.ScenarioInfo scenarioInfo = new TechTalk.SpecFlow.ScenarioInfo("Verifying shop phone number on the Home page", null, new string[] {

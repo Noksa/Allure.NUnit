@@ -5,6 +5,9 @@
     "enableParameters": true,
     "allowLocalHistoryTrend": false,
     "links": [
+      "https://www.google.com/search?q={issue}",
+      "https://www.google.com/search?q={link}",
+      "https://www.google.com/search?q={tms}"
     ]
   },
 
@@ -73,11 +76,12 @@
     },
     "labels": {
       "owner": "^owner:?(.+)",
-      "severity": "^(normal|blocker|critical|minor|trivial)"
+      "severity": "^(normal|blocker|critical|minor|trivial|low)"
     },
     "links": {
       "issue": "^issue:(\\d+)",
-      "tms": "^tms:(\\d+)"
+      "tms": "^tms:(\\d+)",
+      "link": "^link:(.+)"
     }
   }
 }

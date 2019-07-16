@@ -352,9 +352,7 @@ namespace Allure.Commons.Helpers
             FailIgnoredTests(ignoredTests, suite);
         }
 
-        #region Privates
-
-        private static Link GetValueWithPattern(Attribute attr)
+        internal static Link GetValueWithPattern(Attribute attr)
         {
             Link value = null;
             var isNeedReplace = false;
@@ -392,6 +390,8 @@ namespace Allure.Commons.Helpers
 
             return value;
         }
+
+        #region Privates
 
         private static void FailIgnoredTests(Dictionary<ITest, string> dict, ITest suite)
         {
