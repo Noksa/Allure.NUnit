@@ -10,8 +10,7 @@ using Allure.Commons.Model;
 using Allure.NUnit.Attributes;
 using TechTalk.SpecFlow;
 using TechTalk.SpecFlow.Bindings;
-using Configuration = Allure.Commons.Json.Configuration;
-using TestResult = Allure.Commons.Model.TestResult;
+using static Allure.Commons.Json.Configuration;
 
 namespace AllureSpecFlow
 {
@@ -20,12 +19,12 @@ namespace AllureSpecFlow
         public const string IgnoreException = "IgnoreException";
         private static readonly ScenarioInfo EmptyScenarioInfo = new ScenarioInfo(string.Empty, string.Empty);
 
-        private static readonly FeatureInfo emptyFeatureInfo = new FeatureInfo(
+        private static readonly FeatureInfo EmptyFeatureInfo = new FeatureInfo(
             CultureInfo.CurrentCulture, string.Empty, string.Empty);
 
-        private static Configuration.SpecFlowCfg _specFlowCfg;
+        private static SpecFlowCfg _specFlowCfg;
 
-        internal static Configuration.SpecFlowCfg SpecFlowCfg
+        internal static SpecFlowCfg SpecFlowCfg
         {
             get
             {
@@ -35,7 +34,7 @@ namespace AllureSpecFlow
             }
         }
 
-        private static Configuration.SpecFlowCfg GetConfiguration()
+        private static SpecFlowCfg GetConfiguration()
         {
             var config = AllureLifecycle.Instance.Config.SpecFlow;
             if (config == null)
@@ -51,9 +50,9 @@ namespace AllureSpecFlow
 
         internal static string GetFeatureContainerId(FeatureInfo featureInfo)
         {
-            var id = (featureInfo != null)
+            var id = featureInfo != null
                 ? featureInfo.GetHashCode().ToString()
-                : emptyFeatureInfo.GetHashCode().ToString();
+                : EmptyFeatureInfo.GetHashCode().ToString();
 
             return id;
         }
@@ -74,7 +73,7 @@ namespace AllureSpecFlow
         internal static TestResult StartTestCase(string containerId, FeatureContext featureContext,
             ScenarioContext scenarioContext)
         {
-            var featureInfo = featureContext?.FeatureInfo ?? emptyFeatureInfo;
+            var featureInfo = featureContext?.FeatureInfo ?? EmptyFeatureInfo;
             var scenarioInfo = scenarioContext?.ScenarioInfo ?? EmptyScenarioInfo;
             var tags = GetTags(featureInfo, scenarioInfo);
             var testResult = new TestResult
@@ -155,18 +154,17 @@ namespace AllureSpecFlow
 
             foreach (var tag in tags)
             {
-                var tagValue = tag;
                 // link
-                if (TryUpdateValueByMatch(SpecFlowCfg.links.link, ref tagValue))
+                if (TryUpdateValueByMatch(SpecFlowCfg.links.link, tag, out var tagValue))
                 {
                     var linkAttr = new AllureLinkAttribute(tagValue);
                     var link = ReportHelper.GetValueWithPattern(linkAttr);
                     result.Item2.Add(link);
                     continue;
                 }
-
                 // issue
-                if (TryUpdateValueByMatch(SpecFlowCfg.links.issue, ref tagValue))
+
+                if (TryUpdateValueByMatch(SpecFlowCfg.links.issue, tag, out tagValue))
                 {
                     var issueAttr = new AllureIssueAttribute(tagValue);
                     var issue = ReportHelper.GetValueWithPattern(issueAttr);
@@ -175,7 +173,8 @@ namespace AllureSpecFlow
                 }
 
                 // tms
-                if (TryUpdateValueByMatch(SpecFlowCfg.links.tms, ref tagValue))
+
+                if (TryUpdateValueByMatch(SpecFlowCfg.links.tms, tag, out tagValue))
                 {
                     var tmsAttr = new AllureTmsAttribute(tagValue);
                     var tms = ReportHelper.GetValueWithPattern(tmsAttr);
@@ -184,87 +183,96 @@ namespace AllureSpecFlow
                 }
 
                 // parent suite
-                if (TryUpdateValueByMatch(SpecFlowCfg.grouping.suites.parentSuite, ref tagValue))
+
+                if (TryUpdateValueByMatch(SpecFlowCfg.grouping.suites.parentSuite, tag, out tagValue))
                 {
                     result.Item1.Add(Label.ParentSuite(tagValue));
                     continue;
                 }
 
                 // suite
-                if (TryUpdateValueByMatch(SpecFlowCfg.grouping.suites.suite, ref tagValue))
+
+                if (TryUpdateValueByMatch(SpecFlowCfg.grouping.suites.suite, tag, out tagValue))
                 {
                     result.Item1.Add(Label.Suite(tagValue));
                     continue;
                 }
 
                 // sub suite
-                if (TryUpdateValueByMatch(SpecFlowCfg.grouping.suites.subSuite, ref tagValue))
+
+                if (TryUpdateValueByMatch(SpecFlowCfg.grouping.suites.subSuite, tag, out tagValue))
                 {
                     result.Item1.Add(Label.SubSuite(tagValue));
                     continue;
                 }
 
                 // epic
-                if (TryUpdateValueByMatch(SpecFlowCfg.grouping.behaviors.epic, ref tagValue))
+
+                if (TryUpdateValueByMatch(SpecFlowCfg.grouping.behaviors.epic, tag, out tagValue))
                 {
                     result.Item1.Add(Label.Epic(tagValue));
                     continue;
                 }
 
                 // story
-                if (TryUpdateValueByMatch(SpecFlowCfg.grouping.behaviors.story, ref tagValue))
+
+                if (TryUpdateValueByMatch(SpecFlowCfg.grouping.behaviors.story, tag, out tagValue))
                 {
                     result.Item1.Add(Label.Story(tagValue));
                     continue;
                 }
 
                 // package
-                if (TryUpdateValueByMatch(SpecFlowCfg.grouping.packages.package, ref tagValue))
+
+                if (TryUpdateValueByMatch(SpecFlowCfg.grouping.packages.package, tag, out tagValue))
                 {
                     result.Item1.Add(Label.Package(tagValue));
                     continue;
                 }
 
                 // test class
-                if (TryUpdateValueByMatch(SpecFlowCfg.grouping.packages.testClass, ref tagValue))
+
+                if (TryUpdateValueByMatch(SpecFlowCfg.grouping.packages.testClass, tag, out tagValue))
                 {
                     result.Item1.Add(Label.TestClass(tagValue));
                     continue;
                 }
 
                 // test method
-                if (TryUpdateValueByMatch(SpecFlowCfg.grouping.packages.testMethod, ref tagValue))
+
+                if (TryUpdateValueByMatch(SpecFlowCfg.grouping.packages.testMethod, tag, out tagValue))
                 {
                     result.Item1.Add(Label.TestMethod(tagValue));
                     continue;
                 }
 
                 // owner
-                if (TryUpdateValueByMatch(SpecFlowCfg.labels.owner, ref tagValue))
+
+                if (TryUpdateValueByMatch(SpecFlowCfg.labels.owner, tag, out tagValue))
                 {
                     result.Item1.Add(Label.Owner(tagValue));
                     continue;
                 }
 
                 // severity
-                if (TryUpdateValueByMatch(SpecFlowCfg.labels.severity, ref tagValue) &&
+
+                if (TryUpdateValueByMatch(SpecFlowCfg.labels.severity, tag, out tagValue) &&
                     Enum.TryParse(tagValue, true, out SeverityLevel level))
                 {
                     result.Item1.Add(Label.Severity(level));
                     continue;
                 }
 
-                // tag
-                result.Item1.Add(Label.Tag(tagValue));
+                result.Item1.Add(Label.Tag(tag));
             }
 
             return result;
         }
 
-        private static bool TryUpdateValueByMatch(string expression, ref string value)
+        private static bool TryUpdateValueByMatch(string expression, string tag, out string value)
         {
-            if (string.IsNullOrWhiteSpace(value) || string.IsNullOrWhiteSpace(expression))
-                return false;
+            value = null;
+            if (string.IsNullOrWhiteSpace(expression) || string.IsNullOrWhiteSpace(tag)) return false;
 
             Regex regex;
             try
@@ -277,15 +285,14 @@ namespace AllureSpecFlow
                 return false;
             }
 
-            if (regex.IsMatch(value))
-            {
-                var groups = regex.Match(value).Groups;
-                value = groups.Count == 1 ? groups[0].Value : groups[1].Value;
+            var match = regex.Match(tag);
 
-                return true;
-            }
+            if (!match.Success) return false;
 
-            return false;
+            var groups = match.Groups;
+            value = groups.Count == 1 ? groups[0].Value : groups[1].Value;
+
+            return true;
         }
     }
 }

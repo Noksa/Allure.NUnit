@@ -6,7 +6,6 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Allure.Commons;
-using Allure.Commons.Json;
 using Allure.Commons.Model;
 using CsvHelper;
 using TechTalk.SpecFlow;
@@ -21,15 +20,15 @@ namespace AllureSpecFlow
     {
         private const string NoMatchingStepMessage = "No matching step definition found for the step";
 
+        static AllureTestTracerWrapper()
+        {
+            _ = PluginHelper.SpecFlowCfg;
+        }
+
         public AllureTestTracerWrapper(ITraceListener traceListener, IStepFormatter stepFormatter,
             IStepDefinitionSkeletonProvider stepDefinitionSkeletonProvider, SpecFlowConfiguration specFlowConfiguration)
             : base(traceListener, stepFormatter, stepDefinitionSkeletonProvider, specFlowConfiguration)
         {
-        }
-
-        static AllureTestTracerWrapper()
-        {
-            _ = PluginHelper.SpecFlowCfg;
         }
 
         void ITestTracer.TraceStep(StepInstance stepInstance, bool showAdditionalArguments)
@@ -69,10 +68,10 @@ namespace AllureSpecFlow
             TraceNoMatchingStepDefinition(stepInstance, targetLanguage, bindingCulture, matchesWithoutScopeCheck);
             AllureLifecycle.Instance.StopStep(x => x.status = Status.broken);
             AllureLifecycle.Instance.UpdateTestCase(x =>
-                {
-                    x.status = Status.broken;
-                    x.statusDetails = new StatusDetails { message = NoMatchingStepMessage };
-                });
+            {
+                x.status = Status.broken;
+                x.statusDetails = new StatusDetails {message = NoMatchingStepMessage};
+            });
         }
 
         private void StartStep(StepInstance stepInstance)
@@ -92,7 +91,7 @@ namespace AllureSpecFlow
                     ".txt");
 
             var table = stepInstance.TableArgument;
-            bool isTableProcessed = (table == null);
+            var isTableProcessed = table == null;
 
             // parse table as step params
             if (table != null)
@@ -105,26 +104,23 @@ namespace AllureSpecFlow
                     // convert 2 column table into param-value
                     if (table.Header.Count == 2)
                     {
-                        var paramNameMatch = Regex.IsMatch(header[0], PluginHelper.SpecFlowCfg.stepArguments.paramNameRegex);
-                        var paramValueMatch = Regex.IsMatch(header[1], PluginHelper.SpecFlowCfg.stepArguments.paramValueRegex);
+                        var paramNameMatch = Regex.IsMatch(header[0],
+                            PluginHelper.SpecFlowCfg.stepArguments.paramNameRegex);
+                        var paramValueMatch = Regex.IsMatch(header[1],
+                            PluginHelper.SpecFlowCfg.stepArguments.paramValueRegex);
                         if (paramNameMatch && paramValueMatch)
                         {
-                            for (int i = 0; i < table.RowCount; i++)
-                            {
-                                parameters.Add(new Parameter { name = table.Rows[i][0], value = table.Rows[i][1] });
-                            }
+                            for (var i = 0; i < table.RowCount; i++)
+                                parameters.Add(new Parameter {name = table.Rows[i][0], value = table.Rows[i][1]});
 
                             isTableProcessed = true;
                         }
-
                     }
                     // add step params for 1 row table
                     else if (table.RowCount == 1)
                     {
-                        for (int i = 0; i < table.Header.Count; i++)
-                        {
-                            parameters.Add(new Parameter { name = header[i], value = table.Rows[0][i] });
-                        }
+                        for (var i = 0; i < table.Header.Count; i++)
+                            parameters.Add(new Parameter {name = header[i], value = table.Rows[0][i]});
                         isTableProcessed = true;
                     }
 
@@ -136,27 +132,20 @@ namespace AllureSpecFlow
 
             // add csv table for multi-row table if was not processed as params already
             if (!isTableProcessed)
-            {
                 using (var sw = new StringWriter())
                 using (var csv = new CsvWriter(sw))
                 {
-                    foreach (var item in table.Header)
-                    {
-                        csv.WriteField(item);
-                    }
+                    foreach (var item in table.Header) csv.WriteField(item);
                     csv.NextRecord();
                     foreach (var row in table.Rows)
                     {
-                        foreach (var item in row.Values)
-                        {
-                            csv.WriteField(item);
-                        }
+                        foreach (var item in row.Values) csv.WriteField(item);
                         csv.NextRecord();
                     }
+
                     AllureLifecycle.Instance.AddAttachment("table", "text/csv",
                         Encoding.ASCII.GetBytes(sw.ToString()), ".csv");
                 }
-            }
         }
 
         private static void FailScenario(Exception ex)
@@ -164,7 +153,7 @@ namespace AllureSpecFlow
             AllureLifecycle.Instance.UpdateTestCase(
                 x =>
                 {
-                    x.status = (x.status != Status.none) ? x.status : Status.failed;
+                    x.status = x.status != Status.none ? x.status : Status.failed;
                     x.statusDetails = PluginHelper.GetStatusDetails(ex);
                 });
         }
