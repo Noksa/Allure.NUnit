@@ -10,7 +10,7 @@
     <projectUrl>https://github.com/Noksa/Allure.NUnit</projectUrl>
     <iconUrl>https://avatars0.githubusercontent.com/u/36312857?s=40&amp;v=4</iconUrl>
     <description>Allure SpecFlow3 adaptor for NUnit</description>
-    <releaseNotes>Fix severity/issue/tms/link tags</releaseNotes>
+    <releaseNotes>Fix #12 from original adapter repository and add parameters to suites if enableParameters set to true</releaseNotes>
     <copyright>Noksa (Alexandr Danilin)</copyright>
     <tags>allure, specflow</tags>
     <repository url="https://github.com/Noksa/Allure.NUnit" />
