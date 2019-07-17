@@ -3,7 +3,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
   <metadata>
     <id>Noksa.NUnit.SpecFlow3</id>
-    <version>1.1.1</version>
+    <version>1.1.2</version>
     <authors>Noksa (Alexandr Danilin)</authors>
     <owners>Noksa (Alexandr Danilin)</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
