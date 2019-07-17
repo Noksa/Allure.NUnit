@@ -14,7 +14,7 @@ using NUnit.Framework.Interfaces;
 using NUnit.Framework.Internal;
 using TestResult = Allure.Commons.Model.TestResult;
 
-[assembly:InternalsVisibleTo("Allure.SpecFlowPlugin")]
+[assembly: InternalsVisibleTo("Allure.SpecFlowPlugin")]
 
 namespace Allure.Commons.Helpers
 {
@@ -22,6 +22,7 @@ namespace Allure.Commons.Helpers
     {
         internal static readonly object Locker = new object();
         internal static bool IsSpecFlow { get; set; }
+
         internal static List<ITest> GetAllTestsInSuite(ITest suite)
         {
             var list = new List<ITest>();
@@ -65,6 +66,24 @@ namespace Allure.Commons.Helpers
                     AllureLifecycle.Instance.UpdateTestCase(testUuid,
                         x => x.parameters.Add(param));
                 }
+            }
+        }
+
+        internal static void AddStepParameters(object[] stepParams, string stepUuid = null)
+        {
+            if (string.IsNullOrEmpty(stepUuid)) stepUuid = AllureLifecycle.Instance.Storage.GetCurrentStep();
+            if (!AllureLifecycle.Instance.Config.Allure.EnableParameters) return;
+            if (stepParams == null || stepParams.Length == 0) return;
+
+            for (var i = 0; i < stepParams.Length; i++)
+            {
+                var strArg = stepParams[i].ToString();
+                var param = new Parameter
+                {
+                    name = $"Parameter #{i + 1}, {stepParams[i].GetType().Name}",
+                    value = strArg
+                };
+                AllureLifecycle.Instance.UpdateStep(stepUuid, q => q.parameters.Add(param));
             }
         }
 

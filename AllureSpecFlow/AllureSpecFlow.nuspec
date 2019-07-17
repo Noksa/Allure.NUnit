@@ -3,40 +3,40 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
   <metadata>
     <id>Noksa.NUnit.SpecFlow3</id>
-    <version>1.0.5</version>
+    <version>1.1</version>
     <authors>Noksa (Alexandr Danilin)</authors>
     <owners>Noksa (Alexandr Danilin)</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <projectUrl>https://github.com/Noksa/Allure.NUnit</projectUrl>
     <iconUrl>https://avatars0.githubusercontent.com/u/36312857?s=40&amp;v=4</iconUrl>
     <description>Allure SpecFlow3 adaptor for NUnit</description>
-    <releaseNotes>Fix #12 from original adapter repository and add parameters to suites if enableParameters set to true</releaseNotes>
+    <releaseNotes>Add step parameters in report if enableParameters is set to true</releaseNotes>
     <copyright>Noksa (Alexandr Danilin)</copyright>
     <tags>allure, specflow</tags>
     <repository url="https://github.com/Noksa/Allure.NUnit" />
     <dependencies>
       <group targetFramework=".NETFramework4.5">
-        <dependency id="Noksa.NUnit.Allure" version="2.6.1" exclude="Build,Analyzers" />
+        <dependency id="Noksa.NUnit.Allure" version="2.6.2" exclude="Build,Analyzers" />
         <dependency id="CsvHelper" version="12.1.2" exclude="Build,Analyzers" />
         <dependency id="SpecFlow" version="3.0.225" exclude="Build,Analyzers" />
       </group>
       <group targetFramework=".NETFramework4.5.1">
-        <dependency id="Noksa.NUnit.Allure" version="2.6.1" exclude="Build,Analyzers" />
+        <dependency id="Noksa.NUnit.Allure" version="2.6.2" exclude="Build,Analyzers" />
         <dependency id="CsvHelper" version="12.1.2" exclude="Build,Analyzers" />
         <dependency id="SpecFlow" version="3.0.225" exclude="Build,Analyzers" />
       </group>
       <group targetFramework=".NETFramework4.5.2">
-        <dependency id="Noksa.NUnit.Allure" version="2.6.1" exclude="Build,Analyzers" />
+        <dependency id="Noksa.NUnit.Allure" version="2.6.2" exclude="Build,Analyzers" />
         <dependency id="CsvHelper" version="12.1.2" exclude="Build,Analyzers" />
         <dependency id="SpecFlow" version="3.0.225" exclude="Build,Analyzers" />
       </group>
       <group targetFramework=".NETFramework4.6">
-        <dependency id="Noksa.NUnit.Allure" version="2.6.1" exclude="Build,Analyzers" />
+        <dependency id="Noksa.NUnit.Allure" version="2.6.2" exclude="Build,Analyzers" />
         <dependency id="CsvHelper" version="12.1.2" exclude="Build,Analyzers" />
         <dependency id="SpecFlow" version="3.0.225" exclude="Build,Analyzers" />
       </group>
       <group targetFramework=".NETStandard2.0">
-        <dependency id="Noksa.NUnit.Allure" version="2.6.1" exclude="Build,Analyzers" />
+        <dependency id="Noksa.NUnit.Allure" version="2.6.2" exclude="Build,Analyzers" />
         <dependency id="CsvHelper" version="12.1.2" exclude="Build,Analyzers" />
         <dependency id="SpecFlow" version="3.0.225" exclude="Build,Analyzers" />
       </group>

@@ -297,19 +297,7 @@ namespace Allure.Commons
                 start = ToUnixTimestamp(DateTimeOffset.Now)
             };
             Instance.StartStep(uuid, stepResult);
-
-            if (Instance.Config.Allure.EnableParameters)
-                for (var i = 0; i < stepParams.Length; i++)
-                {
-                    var strArg = stepParams[i].ToString();
-                    var param = new Parameter
-                    {
-                        name = $"Parameter #{i + 1}, {stepParams[i].GetType().Name}",
-                        value = strArg
-                    };
-                    Instance.UpdateStep(uuid, q => q.parameters.Add(param));
-                }
-
+            ReportHelper.AddStepParameters(stepParams, uuid);
             try
             {
                 switch (del)
