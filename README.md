@@ -6,7 +6,7 @@ Adapter for SpecFlow version 3.<br>
 More information about specflow configuration can be found [here](https://github.com/Noksa/Allure.NUnit/wiki/SpecFlow-configuration).
 
 ### What's new
-* Fixed all bugs against original adapter
+* Fixed all bugs from original adapter
 * Added new features and improvements, such a suite/step parameters.
 * And other...
 
