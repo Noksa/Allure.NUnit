@@ -360,7 +360,7 @@ namespace Allure.Commons
             return this;
         }
 
-        private AllureLifecycle MakeStepWithExMessage(int assertsBeforeCount, string stepName, Exception ex,
+        internal AllureLifecycle MakeStepWithExMessage(int assertsBeforeCount, string stepName, Exception ex,
             Status stepStatus)
         {
             var exMsg = ex.Message;

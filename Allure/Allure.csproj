@@ -1,30 +1,25 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net45;net451;net452;net46;net461</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net45</TargetFrameworks>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <LangVersion>latest</LangVersion>
     <PackageId>Noksa.NUnit.Allure</PackageId>
-    <Version>2.6.2</Version>
+    <Version>3.0.0-beta1</Version>
     <Authors>Noksa (Alexandr Danilin)</Authors>
-    <Product>Noksa (Alexandr Danilin)</Product>
+    <Company>Noksa (Alexandr Danilin)</Company>
     <Description>Allure with improvements</Description>
     <Copyright>Noksa (Alexandr Danilin)</Copyright>
-    <Company>Noksa (Alexandr Danilin)</Company>
     <PackageTags>allure</PackageTags>
-    <PackageReleaseNotes>Improves for SpecFlow adaptor package</PackageReleaseNotes>
-    <NeutralLanguage>en</NeutralLanguage>
-    <RepositoryUrl>https://github.com/Noksa/Allure.NUnit</RepositoryUrl>
     <PackageProjectUrl>https://github.com/Noksa/Allure.NUnit</PackageProjectUrl>
-    <PackageIconUrl>https://avatars0.githubusercontent.com/u/36312857?s=40&amp;v=4</PackageIconUrl>
-    <LangVersion>latest</LangVersion>
+    <RepositoryUrl>https://github.com/Noksa/Allure.NUnit</RepositoryUrl>
+    <PackageIconUrl>https://avatars0.githubusercontent.com/u/36312857?s=40&amp;amp;v=4</PackageIconUrl>
+    <PackageReleaseNotes>Now you can use the [AllureStep] attribute for methods in tests, and they are automatically converted to report steps.
+Forget about wrapping steps with RunStep method.
+More detailed how to use of the attribute, can find here: https://github.com/Noksa/Allure.NUnit/wiki/AllureStep-Attribute
+    </PackageReleaseNotes>
   </PropertyGroup>
-
-  <ItemGroup>
-    <Compile Remove="ScreenshotsReadme\**" />
-    <EmbeddedResource Remove="ScreenshotsReadme\**" />
-    <None Remove="ScreenshotsReadme\**" />
-  </ItemGroup>
-
+  
   <ItemGroup>
     <None Remove="allureConfig.json" />
   </ItemGroup>
@@ -37,15 +32,16 @@
   
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
+    <PackageReference Include="Noksa.Allure.StepInjector" Version="1.0.0-beta3">
+      <PrivateAssets>contentfiles;analyzers</PrivateAssets>
+    </PackageReference>
     <PackageReference Include="NUnit" Version="3.10.1" />
   </ItemGroup>
-  
+
   <ItemGroup Condition="'$(TargetFramework)' == 'net46' OR '$(TargetFramework)' == 'net461' OR '$(TargetFramework)' == 'net462' OR '$(TargetFramework)' == 'net452' OR '$(TargetFramework)' == 'net45' OR '$(TargetFramework)' == 'net451'">
     <PackageReference Include="System.ValueTuple">
       <Version>4.5.0</Version>
     </PackageReference>
-	</ItemGroup>
-  
-  
+    </ItemGroup>
 
 </Project>
