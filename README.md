@@ -2,7 +2,7 @@
 [![nuget](http://flauschig.ch/nubadge.php?id=Noksa.NUnit.Allure)](https://www.nuget.org/packages/Noksa.NUnit.Allure/)
 
 
-#### New in 3.0 - Forgot about wrapping methods with `RunStep`, use [AllureStep] attribute on methods! More info [here](https://github.com/Noksa/Allure.NUnit/wiki/3.0---%5BAllureStep%5D-Attribute).
+#### New in 3.0 - Forgot about wrapping methods with `RunStep`, use [AllureStep] attribute on methods! More info [here](https://github.com/Noksa/Allure.NUnit/wiki/AllureStep-Attribute).
 
 Also, if you want to use allure steps in `[Setup]`, `[TearDown]`, `[OneTimeSetUp]` and `[OneTimeTearDown]` then this is what you need.<br/>
 More information about other new features can be found in the [wiki](https://github.com/Noksa/Allure.NUnit/wiki).
