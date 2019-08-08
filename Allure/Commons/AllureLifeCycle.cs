@@ -650,7 +650,7 @@ namespace Allure.Commons
             return method.Name;
         }
 
-        private static IEnumerable<Exception> GetInnerExceptions(Exception ex)
+        internal static IEnumerable<Exception> GetInnerExceptions(Exception ex)
         {
             if (ex == null) throw new ArgumentNullException(nameof(ex));
 
