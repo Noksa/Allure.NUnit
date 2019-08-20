@@ -1,5 +1,9 @@
-﻿using Allure.Commons;
+﻿using System;
+using System.Collections.Generic;
+using System.Reflection;
+using Allure.Commons;
 using Allure.NUnit.Attributes;
+using Noksa.Allure.StepInjector.Abstract;
 using NUnit.Framework;
 
 namespace TestsSamples
@@ -66,6 +70,7 @@ namespace TestsSamples
         [AllureLink("ID-124")]
         public void Debug()
         {
+            Test(new MegaClass());
             AllureLifecycle.Instance.RunStep("This is step in debugging test", () => { });
         }
 
@@ -95,5 +100,24 @@ namespace TestsSamples
         {
             AllureLifecycle.Instance.Verify.That("This is parametrized step with null parameter", !apartment.HasValue);
         }
+
+        [AllureStep("Test &myClass.GetString()& &myClass.Int& &myClass._fieldName&")]
+        private void Test(MegaClass myClass)
+        {
+
+        }
+
+        
+    }
+
+    public class MegaClass
+    {
+        private string GetString()
+        {
+            return "Mega";
+        }
+
+        private static double _fieldName = 4005;
+        public int Int => 10;
     }
 }

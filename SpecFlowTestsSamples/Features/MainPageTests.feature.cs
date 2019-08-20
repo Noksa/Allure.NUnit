@@ -9,12 +9,12 @@
 //  </auto-generated>
 // ------------------------------------------------------------------------------
 #region Designer generated code
-
-using TechTalk.SpecFlow;
-
 #pragma warning disable
 namespace SpecFlowTestsSamples.Features
 {
+    using TechTalk.SpecFlow;
+    
+    
     [System.CodeDom.Compiler.GeneratedCodeAttribute("TechTalk.SpecFlow", "3.0.0.0")]
     [System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     [NUnit.Framework.TestFixtureAttribute()]
@@ -71,22 +71,23 @@ namespace SpecFlowTestsSamples.Features
         
         [NUnit.Framework.TestAttribute()]
         [NUnit.Framework.DescriptionAttribute("Verifying title of the Home page")]
+        [NUnit.Framework.CategoryAttribute("link:433")]
         [NUnit.Framework.CategoryAttribute("UiTest")]
         [NUnit.Framework.CategoryAttribute("Chrome")]
         [NUnit.Framework.CategoryAttribute("low")]
-        [NUnit.Framework.CategoryAttribute("link:433")]
         public virtual void VerifyingTitleOfTheHomePage()
         {
             TechTalk.SpecFlow.ScenarioInfo scenarioInfo = new TechTalk.SpecFlow.ScenarioInfo("Verifying title of the Home page", null, new string[] {
+                        "link:433",
                         "UiTest",
                         "Chrome",
                         "low"});
-#line 8
+#line 10
 this.ScenarioInitialize(scenarioInfo);
             this.ScenarioStart();
-#line 9
+#line 11
  testRunner.Given("I am navigated to Shop application main page", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Given ");
-#line 10
+#line 12
  testRunner.Then("I see that page title equals to \"My Store\"", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Then ");
 #line hidden
             this.ScenarioCleanup();
@@ -94,22 +95,23 @@ this.ScenarioInitialize(scenarioInfo);
         
         [NUnit.Framework.TestAttribute()]
         [NUnit.Framework.DescriptionAttribute("Verifying shop phone number on the Home page")]
+        [NUnit.Framework.CategoryAttribute("link:433")]
         [NUnit.Framework.CategoryAttribute("UiTest")]
         [NUnit.Framework.CategoryAttribute("Chrome")]
         [NUnit.Framework.CategoryAttribute("low")]
-        [NUnit.Framework.CategoryAttribute("link:433")]
         public virtual void VerifyingShopPhoneNumberOnTheHomePage()
         {
             TechTalk.SpecFlow.ScenarioInfo scenarioInfo = new TechTalk.SpecFlow.ScenarioInfo("Verifying shop phone number on the Home page", null, new string[] {
+                        "link:433",
                         "UiTest",
                         "Chrome",
                         "low"});
-#line 15
+#line 19
 this.ScenarioInitialize(scenarioInfo);
             this.ScenarioStart();
-#line 16
+#line 20
  testRunner.Given("I am navigated to Shop application main page", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Given ");
-#line 17
+#line 21
  testRunner.Then("I see that shop phone number is \"0123-456-787\"", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Then ");
 #line hidden
             this.ScenarioCleanup();

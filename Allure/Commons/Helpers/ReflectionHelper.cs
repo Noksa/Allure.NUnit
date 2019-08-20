@@ -26,24 +26,52 @@ namespace Allure.Commons.Helpers
                             fi.Name == memberName);
                 if (member != null)
                 {
-                    var memberType = member.MemberType;
-                    object value = null;
-                    switch (memberType)
-                    {
-                        case MemberTypes.Field:
-                            value = ((FieldInfo)member).GetValue(null);
-                            break;
-                        case MemberTypes.Property:
-                            value = ((PropertyInfo)member).GetValue(null);
-                            break;
-                    }
-
-                    memberValue = value;
+                    memberValue = GetMemberValue(member, null);
                     break;
                 }
             }
 
             return memberValue;
+        }
+
+        internal static object GetMemberValue(MemberInfo member, object obj)
+        {
+            var memberType = member.MemberType;
+            object value = null;
+            switch (memberType)
+            {
+                case MemberTypes.Field:
+                    var fieldInfo = ((FieldInfo) member);
+                    value = fieldInfo.GetValue(fieldInfo.IsStatic ? null : obj);
+                    break;
+                case MemberTypes.Property:
+                    var propInfo = ((PropertyInfo) member);
+                    value = propInfo.GetValue(propInfo.GetAccessors().Any(a => a.IsStatic) ? null : obj);
+                    break;
+                case MemberTypes.Method:
+                    var methodInfo = ((MethodInfo) member);
+                    var @params = methodInfo.GetParameters().ToArray();
+                    value = methodInfo.Invoke(methodInfo.IsStatic ? null : obj, @params);
+                    break;
+            }
+
+            return value;
+        }
+
+        internal static MemberInfo GetMember(Type type, string memberName)
+        {
+            var member = type.GetMember(memberName,
+                BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy |
+                BindingFlags.NonPublic | BindingFlags.Instance).FirstOrDefault();
+            if (member == null)
+
+                member = type
+                    .GetFields(BindingFlags.Public | BindingFlags.Static |
+                               BindingFlags.FlattenHierarchy | BindingFlags.NonPublic | BindingFlags.Instance)
+                    .FirstOrDefault(fi =>
+                        fi.IsLiteral && !fi.IsInitOnly &&
+                        fi.Name == memberName);
+            return member;
         }
 
         internal static object GetMemberValueFromAssembly(Assembly assembly, string nameSpace, string memberName)
