@@ -204,7 +204,9 @@ namespace Allure.Commons
 
         public AllureLifecycle UpdateTestCase(Action<TestResult> update)
         {
-            return UpdateTestCase(Storage.GetRootStep(), update);
+            var root = Storage.GetRootStep();
+            if (root.EndsWith("-before")) root = Storage.GetCurrentStep();
+            return UpdateTestCase(root, update);
         }
 
         public AllureLifecycle StopTestCase(Action<TestResult> beforeStop)
