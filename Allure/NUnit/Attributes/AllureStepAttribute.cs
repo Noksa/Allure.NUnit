@@ -29,7 +29,7 @@ namespace Allure.NUnit.Attributes
         public override void OnEnter(MethodBase method, Dictionary<string, object> parameters)
         {
             if (string.IsNullOrEmpty(StepText)) StepText = method.Name;
-            else ConvertParametersExtended(parameters);
+            else ConvertParameters(parameters);
             AllureLifecycle.Instance.StartStep(StepText, StepUuid);
             if (parameters != null && parameters.Count > 0) ReportHelper.AddStepParameters(parameters.Select(o => o.Value).ToArray(), StepUuid);
             
@@ -75,7 +75,7 @@ namespace Allure.NUnit.Attributes
             AssertsBeforeCount = TestContext.CurrentContext.Result.Assertions.Count();
         }
 
-        private string ConvertParametersExtended(Dictionary<string, object> parameters)
+        protected override string ConvertParameters(Dictionary<string, object> parameters)
         {
             foreach (var valuePair in parameters)
             {

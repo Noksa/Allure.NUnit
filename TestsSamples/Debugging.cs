@@ -71,6 +71,7 @@ namespace TestsSamples
         public void Debug()
         {
             Test(new MegaClass());
+            Test2(new MegaClass());
             AllureLifecycle.Instance.RunStep("This is step in debugging test", () => { });
         }
 
@@ -107,11 +108,22 @@ namespace TestsSamples
 
         }
 
-        
+        [AllureStep("This is your class? &myClass&")]
+        private void Test2(MegaClass myClass)
+        {
+
+        }
+
+
     }
 
     public class MegaClass
     {
+        public override string ToString()
+        {
+            return "This is my class";
+        }
+
         private string GetString()
         {
             return "Mega";
