@@ -289,8 +289,8 @@ namespace Allure.Commons
             params object[] stepParams)
         {
             var stepStatus = Status.passed;
-            var assertsBefore = TestContext.CurrentContext.Result.Assertions.Count();
             Exception throwedEx = null;
+            var stepHelper = new StepHelper(stepName);
             var resultFunc = default(TResult);
             var uuid = $"{Guid.NewGuid():N}";
             var stepResult = new StepResult
@@ -316,35 +316,11 @@ namespace Allure.Commons
                         break;
                 }
 
-                if (assertsBefore != TestContext.CurrentContext.Result.Assertions.Count())
-                    stepStatus = stepStatusIfFailed;
+                stepStatus = stepHelper.GetStepStatus();
             }
             catch (Exception e)
             {
-                if (e is TargetInvocationException)
-                    throwedEx = GetInnerExceptions(e)
-                        .First(q => q.GetType() != typeof(TargetInvocationException));
-                else
-                    throwedEx = e;
-
-                if (throwedEx is InconclusiveException)
-                    stepStatus = Status.skipped;
-
-                else if (throwedEx is SuccessException)
-                    throwEx = false; // no throw ex, because assert.pass
-                else
-                    stepStatus = stepStatusIfFailed;
-
-                var list =
-                    TestContext.CurrentContext.Test.Properties.Get(AllureConstants.TestAsserts) as List<Exception>;
-                list?.Add(throwedEx);
-                if (!throwedEx.Data.Contains("Rethrow"))
-                {
-                    throwedEx.Data.Add("Rethrow", true);
-                    Instance.MakeStepWithExMessage(assertsBefore, stepName, throwedEx, stepStatusIfFailed);
-                    CurrentTestActionsInException?.ForEach(action => action.Invoke());
-                    GlobalActionsInException?.ForEach(action => action.Invoke());
-                }
+                stepStatus = stepHelper.ProceedException(e, out throwEx, stepStatusIfFailed);
             }
             finally
             {
