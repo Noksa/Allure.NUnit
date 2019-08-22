@@ -250,8 +250,8 @@ namespace Allure.Commons
         }
 
         /// <summary>
-        ///     The function specifies additional behavior of the system with exceptions in methods Instance.RunStep and
-        ///     Verify.That
+        ///     The function specifies additional behavior of the system with exceptions in methods Instance.RunStep,
+        ///     Verify.That, and AllureStepAttribute.
         /// </summary>
         /// <param name="action">Action in Exception</param>
         /// <returns></returns>

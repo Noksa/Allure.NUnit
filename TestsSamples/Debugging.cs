@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Reflection;
 using Allure.Commons;
 using Allure.NUnit.Attributes;
-using Noksa.Allure.StepInjector.Abstract;
 using NUnit.Framework;
 
 namespace TestsSamples

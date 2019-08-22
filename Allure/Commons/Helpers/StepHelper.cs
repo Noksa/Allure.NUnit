@@ -10,44 +10,47 @@ namespace Allure.Commons.Helpers
 {
     internal class StepHelper
     {
-        #region Private fields
-
-        private readonly string _stepText;
-
-        #endregion
-
         #region Ctor
 
         internal StepHelper(string stepText)
         {
             _stepText = stepText;
-            AssertsInTestBeforeStep = GetCurrentAsserts();
+            _assertsInTestBeforeStep = GetCurrentAsserts();
         }
 
         #endregion
 
-        #region Private properties
+        #region Private methods
 
-        private IEnumerable<AssertionResult> AssertsInTestBeforeStep { get; }
+        private static List<AssertionResult> GetCurrentAsserts()
+        {
+            return TestContext.CurrentContext.Result.Assertions.ToList();
+        }
 
         #endregion
 
+        #region Private fields
+
+        private readonly string _stepText;
+        private readonly List<AssertionResult> _assertsInTestBeforeStep;
+        private const string Rethrow = "Rethrow";
+
+        #endregion
 
         #region Internal methods
 
         internal Status GetStepStatus()
         {
-            var currentAsserts = GetCurrentAsserts().ToList();
+            var currentAsserts = GetCurrentAsserts();
 
-            if (AssertsInTestBeforeStep.Count() == currentAsserts.Count) return Status.passed;
+            if (_assertsInTestBeforeStep.Count == currentAsserts.Count) return Status.passed;
 
-            var onlyNewAsserts = currentAsserts.Except(AssertsInTestBeforeStep);
+            var onlyNewAsserts = currentAsserts.Except(_assertsInTestBeforeStep);
 
-            if (onlyNewAsserts.All(assert =>
-                assert.Status != AssertionStatus.Error && assert.Status != AssertionStatus.Failed))
-                return Status.broken;
-
-            return Status.failed;
+            return onlyNewAsserts.All(assert =>
+                assert.Status != AssertionStatus.Error && assert.Status != AssertionStatus.Failed)
+                ? Status.broken
+                : Status.failed;
         }
 
         internal Status ProceedException(Exception e, out bool throwEx, Status defaultStepStatus = Status.failed)
@@ -70,24 +73,16 @@ namespace Allure.Commons.Helpers
             var list =
                 TestContext.CurrentContext.Test.Properties.Get(AllureConstants.TestAsserts) as List<Exception>;
             list?.Add(throwedEx);
-            if (!throwedEx.Data.Contains("Rethrow"))
+            if (!throwedEx.Data.Contains(Rethrow))
             {
-                throwedEx.Data.Add("Rethrow", true);
-                AllureLifecycle.Instance.MakeStepWithExMessage(AssertsInTestBeforeStep.Count(), _stepText, throwedEx, defaultStepStatus);
+                throwedEx.Data.Add(Rethrow, true);
+                AllureLifecycle.Instance.MakeStepWithExMessage(_assertsInTestBeforeStep.Count, _stepText, throwedEx,
+                    defaultStepStatus);
                 AllureLifecycle.CurrentTestActionsInException?.ForEach(action => action.Invoke());
                 AllureLifecycle.GlobalActionsInException?.ForEach(action => action.Invoke());
             }
 
             return stepStatus;
-        }
-
-        #endregion
-
-        #region Private methods
-
-        private IEnumerable<AssertionResult> GetCurrentAsserts()
-        {
-            return TestContext.CurrentContext.Result.Assertions.ToList();
         }
 
         #endregion
