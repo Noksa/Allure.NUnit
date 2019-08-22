@@ -7,23 +7,25 @@ using Allure.Commons;
 using Allure.Commons.Helpers;
 using Allure.Commons.Model;
 using Noksa.Allure.StepInjector.Abstract;
-using NUnit.Framework;
 
 namespace Allure.NUnit.Attributes
 {
     public class AllureStepAttribute : AbstractAllureStepAttribute
     {
+        #region Step helper
 
-        private int AssertsBeforeCount { get; set; }
+        private readonly StepHelper _stepHelper;
 
-        public AllureStepAttribute()
+        #endregion
+
+
+        public AllureStepAttribute() : this(null)
         {
-            SetAssertsBefore();
         }
         
         public AllureStepAttribute(string stepText) : base(stepText)
         {
-            SetAssertsBefore();
+            _stepHelper = new StepHelper(stepText);
         }
 
         public override void OnEnter(MethodBase method, Dictionary<string, object> parameters)
@@ -37,42 +39,16 @@ namespace Allure.NUnit.Attributes
 
         public override void OnExit()
         {
-            AllureLifecycle.Instance.UpdateStep(StepUuid, step => step.status = Status.passed);
+            var stepStatus = _stepHelper.GetStepStatus();
+            AllureLifecycle.Instance.UpdateStep(StepUuid, step => step.status = stepStatus);
             AllureLifecycle.Instance.StopStep(StepUuid);
         }
 
         public override void OnException(Exception e)
         {
-            var stepStatus = Status.failed;
-            Exception throwedEx;
-            if (e is TargetInvocationException)
-                throwedEx = AllureLifecycle.GetInnerExceptions(e)
-                    .First(q => q.GetType() != typeof(TargetInvocationException));
-            else
-                throwedEx = e;
-
-            if (throwedEx is InconclusiveException)
-                stepStatus = Status.skipped;
-
-            var list =
-                TestContext.CurrentContext.Test.Properties.Get(AllureConstants.TestAsserts) as List<Exception>;
-            list?.Add(throwedEx);
-            if (!throwedEx.Data.Contains("Rethrow"))
-            {
-                throwedEx.Data.Add("Rethrow", true);
-                AllureLifecycle.Instance.MakeStepWithExMessage(AssertsBeforeCount, StepText, throwedEx, stepStatus);
-                AllureLifecycle.CurrentTestActionsInException?.ForEach(action => action.Invoke());
-                AllureLifecycle.GlobalActionsInException?.ForEach(action => action.Invoke());
-            }
-
+            var stepStatus = _stepHelper.ProceedException(e, out _);
             AllureLifecycle.Instance.UpdateStep(StepUuid, step => step.status = stepStatus);
             AllureLifecycle.Instance.StopStep(StepUuid);
-        }
-
-
-        private void SetAssertsBefore()
-        {
-            AssertsBeforeCount = TestContext.CurrentContext.Result.Assertions.Count();
         }
 
         protected override string ConvertParameters(Dictionary<string, object> parameters)
@@ -106,6 +82,10 @@ namespace Allure.NUnit.Attributes
 
             return StepText;
         }
+
+        
+
+       
 
     }
 }

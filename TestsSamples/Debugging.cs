@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Reflection;
 using Allure.Commons;
 using Allure.NUnit.Attributes;
-using Noksa.Allure.StepInjector.Abstract;
 using NUnit.Framework;
 
 namespace TestsSamples
@@ -70,9 +67,8 @@ namespace TestsSamples
         [AllureLink("ID-124")]
         public void Debug()
         {
-            Test(new MegaClass());
             Test2(new MegaClass());
-            AllureLifecycle.Instance.RunStep("This is step in debugging test", () => { });
+            AllureLifecycle.Instance.RunStep("This is step in debugging test", () => throw new Exception("test ex"));
         }
 
         [TestCase(TestName = "Ignore testing")]
@@ -108,10 +104,12 @@ namespace TestsSamples
 
         }
 
-        [AllureStep("This is your class? &myClass&")]
-        private void Test2(MegaClass myClass)
+        [AllureStep("w")]
+        private MegaClass Test2(MegaClass myClass)
         {
-
+            Console.WriteLine("Amazing shit");
+           //throw new Exception("e");
+           return null;
         }
 
 

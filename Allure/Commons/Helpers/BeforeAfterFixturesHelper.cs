@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading;
+using Noksa.Allure.StepInjector.Abstract;
 using NUnit.Framework;
 using NUnit.Framework.Internal;
 
@@ -36,13 +37,16 @@ namespace Allure.Commons.Helpers
                     return false;
                 }
 
-                var result = sMethod.DeclaringType != typeof(AllureReport) &&
-                    sMethod.GetCustomAttributes().Any(
-                        attr =>
-                            attr is SetUpAttribute || attr is OneTimeSetUpAttribute ||
-                            attr is TearDownAttribute ||
-                            attr is OneTimeTearDownAttribute);
-                return result;
+                var result = sMethod.DeclaringType != typeof(AllureReport);
+                if (!result) return false;
+                var result2 = sMethod.GetCustomAttribute<SetUpAttribute>();
+                if (result2 != null) return true;
+                var result3 = sMethod.GetCustomAttribute<OneTimeSetUpAttribute>();
+                if (result3 != null) return true;
+                var result4 = sMethod.GetCustomAttribute<TearDownAttribute>();
+                if (result4 != null) return true;
+                var result5 = sMethod.GetCustomAttribute<OneTimeTearDownAttribute>();
+                return result5 != null;
             });
             if (method == null)
             {
