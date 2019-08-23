@@ -67,7 +67,8 @@ namespace TestsSamples
         [AllureLink("ID-124")]
         public void Debug()
         {
-            Test2(new MegaClass());
+            TestExtensionMethod("Moar");
+            Test(new MegaClass());
             AllureLifecycle.Instance.RunStep("This is step in debugging test", () => throw new Exception("test ex"));
         }
 
@@ -98,8 +99,14 @@ namespace TestsSamples
             AllureLifecycle.Instance.Verify.That("This is parametrized step with null parameter", !apartment.HasValue);
         }
 
-        [AllureStep("Test &myClass.GetString()& &myClass.Int& &myClass._fieldName&")]
+        [AllureStep("Test &myClass.GetString()&")]
         private void Test(MegaClass myClass)
+        {
+
+        }
+
+        [AllureStep("This is call of extension method &str.ExtMethod()&")]
+        private void TestExtensionMethod(string str)
         {
 
         }
@@ -122,7 +129,7 @@ namespace TestsSamples
             return "This is my class";
         }
 
-        private string GetString()
+        private static string GetString()
         {
             return "Mega";
         }
@@ -130,4 +137,13 @@ namespace TestsSamples
         private static double _fieldName = 4005;
         public int Int => 10;
     }
+
+    public static class ExtMethods
+    {
+        public static string ExtMethod(this string str)
+        {
+            return $"Success";
+        }
+    }
 }
+

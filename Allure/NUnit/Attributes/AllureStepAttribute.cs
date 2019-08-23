@@ -64,7 +64,13 @@ namespace Allure.NUnit.Attributes
                         if (!match1.Success || match1.Groups.Count < 2) continue;
                         var obj = valuePair.Value;
                         var call = match1.Groups[1].Value;
-                        if (call.EndsWith("()")) call = call.Replace("()", "");
+                        var firstIndex = call.LastIndexOf('(');
+                        if (firstIndex != -1)
+                        {
+                            var lastIndex = call.LastIndexOf(')');
+                            if (lastIndex - firstIndex > 1) throw new ArgumentException("Sorry, you cannot use methods with parameters in AllureStep at the moment.\nThis will be added in later releases.");
+                            call = call.Remove(firstIndex, lastIndex - firstIndex + 1);
+                        }
                         var member = ReflectionHelper.GetMember(obj.GetType(), call);
                         if (member != null)
                         {
