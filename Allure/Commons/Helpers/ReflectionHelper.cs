@@ -59,7 +59,7 @@ namespace Allure.Commons.Helpers
             return value;
         }
 
-        internal static MethodInfo GetExtensionMethod(this Type paramType, string methodName)
+        internal static MethodInfo GetExtensionMethod(Type paramType, string methodName)
         {
             foreach (var item in AppDomain.CurrentDomain.GetAssemblies())
             {
