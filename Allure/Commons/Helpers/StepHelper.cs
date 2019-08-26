@@ -53,9 +53,9 @@ namespace Allure.Commons.Helpers
                 : Status.failed;
         }
 
-        internal Status ProceedException(Exception e, out bool throwEx, Status defaultStepStatus = Status.failed)
+        internal (Status StepStatus, Exception ThrowedEx, bool NeedRethrow) ProceedException(Exception e, Status defaultStepStatus = Status.failed)
         {
-            throwEx = true;
+            var throwEx = true;
             var stepStatus = defaultStepStatus;
             Exception throwedEx;
             if (e is TargetInvocationException)
@@ -82,7 +82,7 @@ namespace Allure.Commons.Helpers
                 AllureLifecycle.GlobalActionsInException?.ForEach(action => action.Invoke());
             }
 
-            return stepStatus;
+            return (stepStatus, throwedEx, throwEx);
         }
 
         #endregion

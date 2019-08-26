@@ -5,14 +5,13 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using Allure.Commons;
 using Allure.Commons.Helpers;
-using Allure.Commons.Model;
 using Noksa.Allure.StepInjector.Abstract;
 
 namespace Allure.NUnit.Attributes
 {
     public class AllureStepAttribute : AbstractAllureStepAttribute
     {
-        #region Step helper
+        #region Private fields
 
         private readonly StepHelper _stepHelper;
 
@@ -46,7 +45,7 @@ namespace Allure.NUnit.Attributes
 
         public override void OnException(Exception e)
         {
-            var stepStatus = _stepHelper.ProceedException(e, out _);
+            var (stepStatus, _, _) = _stepHelper.ProceedException(e);
             AllureLifecycle.Instance.UpdateStep(StepUuid, step => step.status = stepStatus);
             AllureLifecycle.Instance.StopStep(StepUuid);
         }

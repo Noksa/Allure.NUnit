@@ -320,7 +320,7 @@ namespace Allure.Commons
             }
             catch (Exception e)
             {
-                stepStatus = stepHelper.ProceedException(e, out throwEx, stepStatusIfFailed);
+                (stepStatus, throwedEx, throwEx) = stepHelper.ProceedException(e, stepStatusIfFailed);
             }
             finally
             {
