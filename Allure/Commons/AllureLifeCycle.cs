@@ -258,6 +258,7 @@ namespace Allure.Commons
         public AllureLifecycle SetCurrentTestActionInException(Action action)
         {
             if (CurrentTestActionsInException == null) CurrentTestActionsInException = new List<Action>();
+            
             CurrentTestActionsInException.Add(action);
             return this;
         }
@@ -320,7 +321,9 @@ namespace Allure.Commons
             }
             catch (Exception e)
             {
-                (stepStatus, throwedEx, throwEx) = stepHelper.ProceedException(e, stepStatusIfFailed);
+                bool needRethrow;
+                (stepStatus, throwedEx, needRethrow) = stepHelper.ProceedException(e, stepStatusIfFailed);
+                if (throwEx) throwEx = needRethrow;
             }
             finally
             {
