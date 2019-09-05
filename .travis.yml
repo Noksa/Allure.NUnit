@@ -1,1 +1,5 @@
 language: csharp
+solution: "./Allure.sln"
+script:
+ - nuget restore
+ - msbuild
