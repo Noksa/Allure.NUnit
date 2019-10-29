@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Allure.Commons;
+using Allure.Commons.Helpers;
 using Allure.Commons.Model;
 using CsvHelper;
 using TechTalk.SpecFlow;
@@ -46,6 +47,10 @@ namespace AllureSpecFlow
         void ITestTracer.TraceError(Exception ex)
         {
             TraceError(ex);
+            var stepText = "";
+            AllureLifecycle.Instance.UpdateStep(x => { stepText = x.name; });
+            var stepHelper = new StepHelper(stepText);
+            stepHelper.ProceedException(ex);
             AllureLifecycle.Instance.StopStep(x => x.status = Status.failed);
             FailScenario(ex);
         }
@@ -127,7 +132,6 @@ namespace AllureSpecFlow
                     stepResult.parameters = parameters;
                 }
             }
-
             AllureLifecycle.Instance.StartStep(PluginHelper.NewId(), stepResult);
 
             // add csv table for multi-row table if was not processed as params already

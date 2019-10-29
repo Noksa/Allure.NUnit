@@ -50,8 +50,8 @@ namespace TestsSamples
         [OneTimeSetUp]
         public void OneTimeSetup()
         {
-            AllureLifecycle.Instance.RunStep(
-                $"This is onetimesetup step of fixture {TestContext.CurrentContext.Test.FullName}", () => { });
+            //AllureLifecycle.Instance.RunStep($"This is onetimesetup step of fixture {TestContext.CurrentContext.Test.FullName}", () => { });
+            Test2();
         }
 
         [OneTimeTearDown]
@@ -112,11 +112,10 @@ namespace TestsSamples
         }
 
         [AllureStep("w")]
-        private MegaClass Test2(MegaClass myClass)
+        private void Test2()
         {
             Console.WriteLine("Amazing shit");
            //throw new Exception("e");
-           return null;
         }
 
 

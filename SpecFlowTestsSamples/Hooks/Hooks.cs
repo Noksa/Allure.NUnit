@@ -9,6 +9,7 @@ using BoDi;
 using NUnit.Framework;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
+using OpenQA.Selenium.Support.Extensions;
 using TechTalk.SpecFlow;
 using WebDriverManager;
 using WebDriverManager.DriverConfigs.Impl;
@@ -42,6 +43,11 @@ namespace SpecFlowTestsSamples.Hooks
             new DriverManager().SetUpDriver(new ChromeConfig());
             _driver = new ChromeDriver();
             _objectContainer.RegisterInstanceAs(_driver);
+            AllureLifecycle.Instance.SetCurrentTestActionInException(() =>
+            {
+                var arr = _driver.TakeScreenshot().AsByteArray;
+                AllureLifecycle.Instance.AddAttachment("Screenshot", AllureLifecycle.AttachFormat.ImagePng, arr);
+            });
         }
 
         [AfterScenario]

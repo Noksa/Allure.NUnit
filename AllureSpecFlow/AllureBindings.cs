@@ -54,6 +54,14 @@ namespace AllureSpecFlow
                 .UpdateTestCase(scenarioId,
                     x => x.status = x.status != Status.none ? x.status : Status.passed)
                 .StopTestCase(scenarioId, true);
+            AllureLifecycle.CurrentTestActionsInException = null;
+        }
+
+        [AfterTestRun]
+        public static void AfterAllTests()
+        {
+            AllureLifecycle.GlobalActionsInException = null;
+            AllureLifecycle.CurrentTestActionsInException = null;
         }
 
         [BeforeStep]

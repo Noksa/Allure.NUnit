@@ -23,6 +23,7 @@ namespace SpecFlowTestsSamples.Steps
         public void GivenIAmNavigatedToShopApplication()
         {
             _driver.Navigate().GoToUrl("http://automationpractice.com/index.php");
+            throw new Exception("fail");
         }
 
         [Then(@"I am redirected to Shop application main page")]
