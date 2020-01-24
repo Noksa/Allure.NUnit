@@ -5,7 +5,7 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <LangVersion>latest</LangVersion>
     <PackageId>Noksa.NUnit.Allure</PackageId>
-    <Version>3.0.4</Version>
+    <Version>3.0.5</Version>
     <Authors>Noksa (Alexandr Danilin)</Authors>
     <Company>Noksa (Alexandr Danilin)</Company>
     <Description>Allure with improvements</Description>
@@ -14,10 +14,7 @@
     <PackageProjectUrl>https://github.com/Noksa/Allure.NUnit</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Noksa/Allure.NUnit</RepositoryUrl>
     <PackageIconUrl>https://avatars0.githubusercontent.com/u/36312857?s=40&amp;amp;v=4</PackageIconUrl>
-    <PackageReleaseNotes>Now you can use the [AllureStep] attribute for methods in tests, and they are automatically converted to report steps.
-Forget about wrapping steps with RunStep method.
-More detailed how to use of the attribute, can find here: https://github.com/Noksa/Allure.NUnit/wiki/AllureStep-Attribute
-    </PackageReleaseNotes>
+    <PackageReleaseNotes>Fix NRE in [AllureStep] attribute</PackageReleaseNotes>
   </PropertyGroup>
   
   <ItemGroup>

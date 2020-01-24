@@ -67,7 +67,7 @@ namespace TestsSamples
         [AllureLink("ID-124")]
         public void Debug()
         {
-            TestExtensionMethod("Moar");
+            TestExtensionMethod("test");
             Test(new MegaClass());
             AllureLifecycle.Instance.RunStep("This is step in debugging test", () => throw new Exception("test ex"));
         }
@@ -106,7 +106,7 @@ namespace TestsSamples
         }
 
         [AllureStep("This is call of extension method &str.ExtMethod()&")]
-        private void TestExtensionMethod(string str)
+        private void TestExtensionMethod(string w, string sd = null)
         {
 
         }

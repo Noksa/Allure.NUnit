@@ -77,10 +77,11 @@ namespace Allure.Commons.Helpers
 
             for (var i = 0; i < stepParams.Length; i++)
             {
-                var strArg = stepParams[i].ToString();
+                var strArg = stepParams[i]?.ToString() ?? "null";
+                var paramTypeName = stepParams[i]?.GetType().Name ?? "Unknown";
                 var param = new Parameter
                 {
-                    name = $"Parameter #{i + 1}, {stepParams[i].GetType().Name}",
+                    name = $"Parameter #{i + 1}, {paramTypeName}",
                     value = strArg
                 };
                 AllureLifecycle.Instance.UpdateStep(stepUuid, q => q.parameters.Add(param));
