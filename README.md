@@ -17,8 +17,7 @@ How to use can be found [here](https://github.com/Noksa/Allure.NUnit/wiki/How-to
 [![nuget](http://flauschig.ch/nubadge.php?id=Noksa.NUnit.SpecFlow3)](https://www.nuget.org/packages/Noksa.NUnit.SpecFlow3/)
 
 Adapter for SpecFlow version 3.<br>
-#### Don't forget to add `specflow` block in the [config](https://github.com/Noksa/Allure.NUnit/wiki/AllureConfig-description).
-More information about specflow configuration can be found [here](https://github.com/Noksa/Allure.NUnit/wiki/SpecFlow-configuration).
+#### Read IMPORTANT section [here](https://github.com/Noksa/Allure.NUnit/wiki/SpecFlow-configuration) before use.
 
 ### What's new
 * Fixed all bugs from original adapter
