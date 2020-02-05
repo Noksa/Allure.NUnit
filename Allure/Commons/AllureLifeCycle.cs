@@ -665,7 +665,7 @@ namespace Allure.Commons
         internal void SetDefaultResultsWriter(string outDir)
         {
             var dir = GetDirectoryWithResults(outDir);
-            _writer = new FileSystemResultsWriter(dir);
+            _writer = new FileSystemResultsWriter(dir, Config.Allure.CleanResultDirectory);
         }
 
         #endregion

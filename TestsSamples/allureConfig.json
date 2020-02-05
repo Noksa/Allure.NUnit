@@ -3,6 +3,8 @@
     "directory": "allure-results",
     "allowEmptySuites": true,
     "enableParameters": true,
+    "cleanResultDirectory": true,
+    "allowLocalHistoryTrend": true, 
     "links": [
       "http//test{link}"
     ]

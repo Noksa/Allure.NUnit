@@ -15,10 +15,10 @@ namespace Allure.Commons.Writer
         private readonly string _outputDirectory;
         private readonly JsonSerializer _serializer = new JsonSerializer();
 
-        internal FileSystemResultsWriter(string outputDirectory)
+        internal FileSystemResultsWriter(string outputDirectory, bool isNeedCleanResultsDir)
         {
             _outputDirectory = GetResultsDirectory(outputDirectory);
-            CleanUp(true);
+            if (isNeedCleanResultsDir) CleanUp(true);
             _serializer.NullValueHandling = NullValueHandling.Ignore;
             _serializer.Formatting = Formatting.Indented;
             _serializer.Converters.Add(new StringEnumConverter());

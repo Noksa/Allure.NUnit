@@ -18,6 +18,8 @@ namespace Allure.Commons.Helpers
             if (AllureLifecycle.Instance.Config.Allure.AllowLocalHistoryTrend)
             {
                 var newPreviousResult = new Statistic();
+                var dir = new DirectoryInfo(dirWithResults);
+                if (!dir.Exists) return;
                 var previousFilesWithTests = Directory.GetFiles(dirWithResults, "*-test-run1*");
                 if (previousFilesWithTests.Length == 0) return;
 

@@ -17,6 +17,8 @@ namespace Allure.Commons.Json
 
             public bool AllowLocalHistoryTrend { get; set; } = false;
 
+            public bool CleanResultDirectory { get; set; } = true;
+
             public bool DebugMode { get; set; } = false;
 
             public string Title { get; set; }

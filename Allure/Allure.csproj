@@ -5,7 +5,7 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <LangVersion>latest</LangVersion>
     <PackageId>Noksa.NUnit.Allure</PackageId>
-    <Version>3.1.0-beta1</Version>
+    <Version>3.1.0</Version>
     <Authors>Noksa (Alexandr Danilin)</Authors>
     <Company>Noksa (Alexandr Danilin)</Company>
     <Description>Allure with improvements</Description>
@@ -14,7 +14,9 @@
     <PackageProjectUrl>https://github.com/Noksa/Allure.NUnit</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Noksa/Allure.NUnit</RepositoryUrl>
     <PackageIconUrl>https://avatars0.githubusercontent.com/u/36312857?s=40&amp;amp;v=4</PackageIconUrl>
-    <PackageReleaseNotes>Fix bugs when using [AllureStep] with void methods</PackageReleaseNotes>
+    <PackageReleaseNotes>* Add [AllureStep] support in .NET Core
+* Fix bug with local history trend
+* Add new config option - don't clean results dir before run, if it's needed (allure.cleanResultDirectory in allureConfig.json)</PackageReleaseNotes>
   </PropertyGroup>
   
   <ItemGroup>
@@ -29,7 +31,7 @@
   
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
-    <PackageReference Include="Noksa.Allure.StepInjector" Version="2.0.0">
+    <PackageReference Include="Noksa.Allure.StepInjector" Version="2.0.1">
       <PrivateAssets>contentfiles;analyzers</PrivateAssets>
     </PackageReference>
     <PackageReference Include="NUnit" Version="3.10.1" />
