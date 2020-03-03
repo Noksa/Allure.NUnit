@@ -64,6 +64,12 @@ namespace AllureSpecFlow
             AllureLifecycle.CurrentTestActionsInException = null;
         }
 
+        [AfterStep(Order = int.MaxValue)]
+        public void AfterStepStopStep()
+        {
+            AllureLifecycle.Instance.StopStep(x => { });
+        }
+
         [BeforeStep]
         public void BeforeStep()
         {
