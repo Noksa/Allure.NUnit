@@ -41,7 +41,7 @@ namespace AllureSpecFlow
         void ITestTracer.TraceStepDone(BindingMatch match, object[] arguments, TimeSpan duration)
         {
             TraceStepDone(match, arguments, duration);
-            AllureLifecycle.Instance.StopStep(x => x.status = Status.passed);
+            AllureLifecycle.Instance.UpdateStep(x => x.status = Status.passed);
         }
 
         void ITestTracer.TraceError(Exception ex)
@@ -51,20 +51,20 @@ namespace AllureSpecFlow
             AllureLifecycle.Instance.UpdateStep(x => { stepText = x.name; });
             var stepHelper = new StepHelper(stepText);
             stepHelper.ProceedException(ex);
-            AllureLifecycle.Instance.StopStep(x => x.status = Status.failed);
+            AllureLifecycle.Instance.UpdateStep(x => x.status = Status.failed);
             FailScenario(ex);
         }
 
         void ITestTracer.TraceStepSkipped()
         {
             TraceStepSkipped();
-            AllureLifecycle.Instance.StopStep(x => x.status = Status.skipped);
+            AllureLifecycle.Instance.UpdateStep(x => x.status = Status.skipped);
         }
 
         void ITestTracer.TraceStepPending(BindingMatch match, object[] arguments)
         {
             TraceStepPending(match, arguments);
-            AllureLifecycle.Instance.StopStep(x => x.status = Status.skipped);
+            AllureLifecycle.Instance.UpdateStep(x => x.status = Status.skipped);
         }
 
         void ITestTracer.TraceNoMatchingStepDefinition(StepInstance stepInstance, ProgrammingLanguage targetLanguage,
