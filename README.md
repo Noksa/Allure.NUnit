@@ -7,7 +7,6 @@
 Also, if you want to use allure steps in `[Setup]`, `[TearDown]`, `[OneTimeSetUp]` and `[OneTimeTearDown]` then this is what you need.<br/>
 More information about other new features can be found in the [wiki](https://github.com/Noksa/Allure.NUnit/wiki).
 
-You can also sponsor this repository if you wish. Just click the "Sponsor" button at the top.
 
 ## How to use
 
