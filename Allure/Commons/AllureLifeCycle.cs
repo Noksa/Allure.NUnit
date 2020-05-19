@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Reflection;
+using System.Runtime.ExceptionServices;
 using System.Text;
 using System.Threading;
 using System.Xml.Linq;
@@ -331,7 +332,7 @@ namespace Allure.Commons
                 Instance.StopStep(uuid);
             }
 
-            if (throwEx && throwedEx != null) throw throwedEx;
+            if (throwEx && throwedEx != null) ExceptionDispatchInfo.Capture(throwedEx).Throw();
             return resultFunc;
         }
 
