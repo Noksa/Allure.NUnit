@@ -1,11 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net45</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <LangVersion>latest</LangVersion>
     <PackageId>Noksa.NUnit.Allure</PackageId>
-    <Version>3.1.1-beta1</Version>
+    <Version>3.2.0-issue49</Version>
     <Authors>Noksa (Alexandr Danilin)</Authors>
     <Company>Noksa (Alexandr Danilin)</Company>
     <Description>Allure with improvements</Description>
@@ -32,7 +32,7 @@
     <PackageReference Include="Noksa.Allure.StepInjector" Version="2.0.3">
       <PrivateAssets>contentfiles;analyzers</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="NUnit" Version="3.10.1" />
+    <PackageReference Include="NUnit" Version="3.11.0" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net46' OR '$(TargetFramework)' == 'net461' OR '$(TargetFramework)' == 'net462' OR '$(TargetFramework)' == 'net452' OR '$(TargetFramework)' == 'net45' OR '$(TargetFramework)' == 'net451'">
