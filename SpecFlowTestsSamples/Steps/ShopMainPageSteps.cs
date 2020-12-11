@@ -16,7 +16,7 @@ namespace SpecFlowTestsSamples.Steps
         public ShopMainPageSteps(IWebDriver driver)
         {
             _driver = driver;
-            shopMainPage = new ShopMainPage(driver);
+            shopMainPage = new ShopMainPage(_driver);
         }
 
         [Given(@"I am navigated to Shop application main page")]

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Configuration;
 using System.Globalization;
 using System.Linq;
@@ -19,7 +20,7 @@ namespace AllureSpecFlow
     public static class PluginHelper
     {
         public const string IgnoreException = "IgnoreException";
-        private static readonly ScenarioInfo EmptyScenarioInfo = new ScenarioInfo(string.Empty, string.Empty);
+        private static readonly ScenarioInfo EmptyScenarioInfo = new ScenarioInfo(string.Empty, string.Empty, new string[] {}, new OrderedDictionary());
 
         private static readonly FeatureInfo EmptyFeatureInfo = new FeatureInfo(
             CultureInfo.CurrentCulture, string.Empty, string.Empty);
